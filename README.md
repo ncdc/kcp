@@ -1,10 +1,8 @@
-# `kcp` is a minimal Kubernetes API server (and more!)
+# `kcp` is a control plane for applications running across multiple Kubernetes clusters
 
 ![build status badge](https://github.com/kcp-dev/kcp/actions/workflows/ci.yaml/badge.svg)
 
-How minimal exactly? `kcp` doesn't know about [`Pod`](https://kubernetes.io/docs/concepts/workloads/pods/)s or [`Node`](https://kubernetes.io/docs/concepts/architecture/nodes/)s, let alone [`Deployment`](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)s, [`Service`](https://kubernetes.io/docs/concepts/services-networking/service/)s, [`LoadBalancer`](https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/)s, etc. when started.
-
-By default, `kcp` only knows about:
+`kcp` is a generic [CustomResourceDefinition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRD) apiserver. By default, `kcp` only knows about:
 
 - [`Namespace`](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/)s
 - [`ServiceAccount`](https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/)s and [role-based access control](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) types like [`Role`](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole) and [`RoleBinding`](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#rolebinding-and-clusterrolebinding)
@@ -12,11 +10,9 @@ By default, `kcp` only knows about:
 - [`CustomResourceDefinition`](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)s, to define new types
 - a handful of other low-level resources like [`Lease`](https://kubernetes.io/docs/reference/kubernetes-api/cluster-resources/lease-v1/)s, [`Event`](https://kubernetes.io/docs/tasks/debug-application-cluster/debug-application-introspection/)s, etc.
 
-![kubectl api-resources showing minimal API resources](./docs/images/kubectl-api-resources.png)
+![kubectl api-resources showing kcp's API resources](./docs/images/kubectl-api-resources.png)
 
-Like vanilla Kubernetes, `kcp` persists these resources in etcd for durable storage.
-
-Any other resources, including standard Kubernetes resources like [`Deployment`](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)s and the rest, can be added as [CustomResourceDefinition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)s (CRDs) and optionally reconciled using the standard controllers launched against the kcp API, or via two-way replication into a Kubernetes cluster.
+Any other resources, including standard Kubernetes resources like [`Deployment`](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)s and the rest, can be added as CRDs and optionally reconciled using the standard controllers launched against the `kcp` API, or via two-way replication into a Kubernetes cluster.
 
 
 ## Why would I want that?
@@ -80,8 +76,13 @@ _No._
 
 Our intention is that our experiments _improve Kubernetes for everyone_, by improving [CRD](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)s and scaling resource watching, and enabling more, better controllers _for everyone_, whether you're using Kubernetes as a container orchestrator or not.
 
-Our `kcp` specific patches are in the [feature-logical-clusters-1.22](https://github.com/kcp-dev/kubernetes/tree/feature-logical-clusters-1.22) feature branch in the [kcp-dev/kubernetes](https://github.com/kcp-dev/kubernetes) repo. See [DEVELOPMENT.md](DEVELOPMENT.md) for how the patches are structured and how they must be formatted during our experimentation phase.  See [GOALS.md](GOALS.md) for more info on how we intend to use `kcp` as a test-bed for exploring ideas that improve the entire ecosystem.
+Our `kcp` specific patches in the [kcp-dev/kubernetes](https://github.com/kcp-dev/kubernetes) repo.
 
+<!--
+TODO, add docs on Kubernetes patches.
+Old content:
+See [DEVELOPMENT.md](DEVELOPMENT.md) for how the patches are structured and how they must be formatted during our experimentation phase.
+-->
 
 ## What's in this repo?
 
@@ -101,11 +102,10 @@ Our `kcp` specific patches are in the [feature-logical-clusters-1.22](https://gi
     - **`kubectl-kcp`**
         * A kubectl plugin that offers kcp specific functionality
     - **`shard-proxy`**
-        * A server that provides a workspace index and sharding details
+        * An early experimental server that provides a workspace index and sharding details
     - **`syncer`**
         * Runs on Kubernetes clusters registered with the `cluster-controller`
         * Synchronizes resources in `kcp` assigned to the clusters
-    - **`syncer`**, which implmenents a transparent multi-cluster sync of resources to offer compute (i.e. to run pods and other workload types) to kcp workspaces using external Kubernetes clusters.
 - **`cmd/virtual-workspaces`**
     * Demonstrates how to implement apiservers for custom access-patterns, e.g. like a workspace index.
 - **`config`**:
@@ -148,7 +148,12 @@ For more scenarios, see [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## This sounds cool and I want to help!
 
-Thanks! And great! You can reach us here, in this repository via [issues](https://github.com/kcp-dev/kcp/issues) and [discussions](https://github.com/kcp-dev/kcp/discussions), or:
+Thanks! And great! Please check out:
+
+* [Good first issue](https://github.com/kcp-dev/kcp/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22) issues
+* [Help wanted](https://github.com/kcp-dev/kcp/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) issues
+
+You can also reach us here, in this repository via [issues](https://github.com/kcp-dev/kcp/issues) and [discussions](https://github.com/kcp-dev/kcp/discussions), or:
 
 - Join the [`#kcp-prototype` channel](https://app.slack.com/client/T09NY5SBT/C021U8WSAFK) in the [Kubernetes Slack workspace](https://slack.k8s.io)
 - Join the mailing lists
