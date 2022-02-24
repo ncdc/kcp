@@ -1,8 +1,10 @@
-# `kcp` is a control plane for applications running across multiple Kubernetes clusters
+# `kcp` provides a Kubernetes-like control plane with true multitenancy, with flexible compute powered by real Kubernetes clusters.
 
 ![build status badge](https://github.com/kcp-dev/kcp/actions/workflows/ci.yaml/badge.svg)
 
-`kcp` is a generic [CustomResourceDefinition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRD) apiserver. By default, `kcp` only knows about:
+`kcp` is a generic [CustomResourceDefinition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRD) apiserver that is divided into multiple "[logical clusters](docs/investigations/logical-clusters.md)" that enable multitenancy of cluster-scoped resources such as CRDs and Namespaces. Each logical cluster is independent: the available APIs and data are separate from one logical cluster to another.
+
+By default, `kcp` only knows about:
 
 - [`Namespace`](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/)s
 - [`ServiceAccount`](https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/)s and [role-based access control](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) types like [`Role`](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole) and [`RoleBinding`](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#rolebinding-and-clusterrolebinding)
@@ -41,7 +43,7 @@ Yes! Here are a few of our top-level goals:
 
 ### Host thousands (*) of small-ish Kubernetes-like [logical clusters](docs/investigations/logical-clusters.md) in a single instance
 
-* Orders of magnitude smaller than a typical large, shared, multi-tenant cluster (~50 resources per cluster)
+* Orders of magnitude fewer resources (~50) in a logical cluster compared to a typical multi-tenant Kubernetes cluster
 * Inexpensive - nearly for free in terms of resource utilization & cost for an empty cluster
 * Independent - install different versions of a CRD in each logical cluster (!!!)
 * Per-cluster administrative rights - each "owner" (person/team/group) of a cluster is a full admin
@@ -51,9 +53,10 @@ Yes! Here are a few of our top-level goals:
 * Dynamically add more **compute** capacity as demand increases - not just nodes, but entire Kubernetes clusters
 
 ### Massive scale
-* 1,000,000 workspaces (logical clusters) in a single installation/setup
-* 10,000 organizations
-* 1,000 shards (a shard is a `kcp` instance that holds a subset of organization and workspace content)
+* Model "organizations" as a way to group and manage "workspaces" (logical clusters). Support upwards of 10,000 organizations.
+* 1,000,000 workspaces in a single installation
+* Span across 1,000 shards (a shard is a `kcp` instance that holds a subset of organization and workspace content)
+* This area is under active investigation. Stay tuned for more details!
 
 ### Local Kubernetes Development?
 
