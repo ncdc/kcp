@@ -36,6 +36,7 @@ Yes! This work is still in early development, which means it's _not ready for pr
 
 `kcp` is currently a prototype, not a project. We're exploring these ideas here to try them out, experiment, and bounce them off each other.
 
+To get a better understanding of what `kcp` can do today, take a look at the recording of the ["Prototype 2" milestone demo](https://asciinema.org/a/FliBHChjeHZxhVtSbAVrekfT4)
 
 ## Can `kcp` do anything else?
 
