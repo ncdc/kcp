@@ -27,7 +27,6 @@ import (
 
 	kcpclienthelper "github.com/kcp-dev/apimachinery/pkg/client"
 	"github.com/kcp-dev/logicalcluster/v2"
-
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,6 +37,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/metadata"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/client-go/util/keyutil"
 	"k8s.io/klog/v2"
@@ -589,10 +589,19 @@ func (s *Server) installAPIBindingController(ctx context.Context, config *rest.C
 		// and the controllers must run as soon as these two informers are up in order to bootstrap
 		// the rest of the system. Everything else in the kcp clientset is APIBinding based.
 		if err := wait.PollImmediateInfiniteWithContext(goContext(hookContext), time.Millisecond*100, func(ctx context.Context) (bool, error) {
-			crdsSynced := s.ApiExtensionsSharedInformerFactory.Apiextensions().V1().CustomResourceDefinitions().Informer().HasSynced()
-			exportsSynced := s.KcpSharedInformerFactory.Apis().V1alpha1().APIExports().Informer().HasSynced()
-			bindingsSynced := s.KcpSharedInformerFactory.Apis().V1alpha1().APIBindings().Informer().HasSynced()
-			return crdsSynced && exportsSynced && bindingsSynced, nil
+			checks := []cache.InformerSynced{
+				s.KcpSharedInformerFactory.Apis().V1alpha1().APIBindings().Informer().HasSynced,
+				s.KcpSharedInformerFactory.Apis().V1alpha1().APIExports().Informer().HasSynced,
+				s.KcpSharedInformerFactory.Apis().V1alpha1().APIResourceSchemas().Informer().HasSynced,
+				s.ApiExtensionsSharedInformerFactory.Apiextensions().V1().CustomResourceDefinitions().Informer().HasSynced,
+			}
+			for _, check := range checks {
+				if !check() {
+					return false, nil
+				}
+			}
+
+			return true, nil
 		}); err != nil {
 			klog.Errorf("failed to finish post-start-hook kcp-install-apibinding-controller: %v", err)
 			// nolint:nilerr
