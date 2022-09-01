@@ -41,7 +41,7 @@ import (
 	tenancyv1alpha1 "github.com/kcp-dev/kcp/pkg/apis/tenancy/v1alpha1"
 	"github.com/kcp-dev/kcp/pkg/authorization/delegated"
 	kcpinformers "github.com/kcp-dev/kcp/pkg/client/informers/externalversions"
-	tenancylisters "github.com/kcp-dev/kcp/pkg/client/listers/tenancy/v1alpha1"
+	tenancyv1alpha1lister "github.com/kcp-dev/kcp/pkg/client/listers/tenancy/v1alpha1"
 )
 
 const (
@@ -55,8 +55,8 @@ func Register(plugins *admission.Plugins) {
 				Handler:          admission.NewHandler(admission.Create, admission.Update),
 				createAuthorizer: delegated.NewDelegatedAuthorizer,
 			}
-			plugin.transitiveTypeResolver = transitiveTypeResolver{
-				getter: func(cluster logicalcluster.Name, name string) (*tenancyv1alpha1.ClusterWorkspaceType, error) {
+			plugin.transitiveTypeResolver = TransitiveTypeResolver{
+				Getter: func(cluster logicalcluster.Name, name string) (*tenancyv1alpha1.ClusterWorkspaceType, error) {
 					return plugin.typeLister.Get(clusters.ToClusterAwareKey(cluster, name))
 				},
 			}
@@ -70,10 +70,10 @@ func Register(plugins *admission.Plugins) {
 //     transitions to the Initializing state.
 type clusterWorkspaceTypeExists struct {
 	*admission.Handler
-	typeLister             tenancylisters.ClusterWorkspaceTypeLister
-	workspaceLister        tenancylisters.ClusterWorkspaceLister
+	typeLister             tenancyv1alpha1lister.ClusterWorkspaceTypeLister
+	workspaceLister        tenancyv1alpha1lister.ClusterWorkspaceLister
 	deepSARClient          kubernetesclient.ClusterInterface
-	transitiveTypeResolver transitiveTypeResolver
+	transitiveTypeResolver TransitiveTypeResolver
 
 	createAuthorizer delegated.DelegatedAuthorizerFactory
 }
@@ -178,6 +178,9 @@ func (o *clusterWorkspaceTypeExists) Admit(ctx context.Context, a admission.Attr
 	for _, alias := range cwtAliases {
 		if alias.Spec.Initializer {
 			cw.Status.Initializers = initialization.EnsureInitializerPresent(initialization.InitializerForType(alias), cw.Status.Initializers)
+		}
+		if len(alias.Spec.DefaultAPIBindings) > 0 {
+			cw.Status.Initializers = initialization.EnsureInitializerPresent(tenancyv1alpha1.ClusterWorkspaceAPIBindingsInitializer, cw.Status.Initializers)
 		}
 	}
 
@@ -426,11 +429,13 @@ func addAdditionalWorkspaceLabels(
 	}
 }
 
-type transitiveTypeResolver struct {
-	getter func(cluster logicalcluster.Name, name string) (*tenancyv1alpha1.ClusterWorkspaceType, error)
+// TODO: Move this out of admission to some shared location
+type TransitiveTypeResolver struct {
+	Getter func(cluster logicalcluster.Name, name string) (*tenancyv1alpha1.ClusterWorkspaceType, error)
 }
 
-func (r *transitiveTypeResolver) Resolve(t *tenancyv1alpha1.ClusterWorkspaceType) ([]*tenancyv1alpha1.ClusterWorkspaceType, error) {
+// Resolve returns all ClusterWorkspaceTypes that a given Type extends.
+func (r *TransitiveTypeResolver) Resolve(t *tenancyv1alpha1.ClusterWorkspaceType) ([]*tenancyv1alpha1.ClusterWorkspaceType, error) {
 	ret, err := r.resolve(t, map[string]bool{}, map[string]bool{}, []string{})
 	if err != nil {
 		return nil, err
@@ -438,7 +443,7 @@ func (r *transitiveTypeResolver) Resolve(t *tenancyv1alpha1.ClusterWorkspaceType
 	return append(ret, t), nil
 }
 
-func (r *transitiveTypeResolver) resolve(cwt *tenancyv1alpha1.ClusterWorkspaceType, seen, pathSeen map[string]bool, path []string) ([]*tenancyv1alpha1.ClusterWorkspaceType, error) {
+func (r *TransitiveTypeResolver) resolve(cwt *tenancyv1alpha1.ClusterWorkspaceType, seen, pathSeen map[string]bool, path []string) ([]*tenancyv1alpha1.ClusterWorkspaceType, error) {
 	qualifiedName := logicalcluster.From(cwt).Join(cwt.Name).String()
 	seen[qualifiedName] = true
 	pathSeen[qualifiedName] = true
@@ -463,7 +468,7 @@ func (r *transitiveTypeResolver) resolve(cwt *tenancyv1alpha1.ClusterWorkspaceTy
 			continue // already seen trunk
 		}
 
-		baseType, err := r.getter(logicalcluster.New(baseTypeRef.Path), tenancyv1alpha1.ObjectName(baseTypeRef.Name))
+		baseType, err := r.Getter(logicalcluster.New(baseTypeRef.Path), tenancyv1alpha1.ObjectName(baseTypeRef.Name))
 		if err != nil {
 			return nil, fmt.Errorf("unable to find inherited workspace type %s", qualifiedName)
 		}

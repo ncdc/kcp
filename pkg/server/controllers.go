@@ -53,6 +53,8 @@ import (
 	configuniversal "github.com/kcp-dev/kcp/config/universal"
 	tenancyv1alpha1 "github.com/kcp-dev/kcp/pkg/apis/tenancy/v1alpha1"
 	kcpclient "github.com/kcp-dev/kcp/pkg/client/clientset/versioned"
+	kcpexternalversions "github.com/kcp-dev/kcp/pkg/client/informers/externalversions"
+	"github.com/kcp-dev/kcp/pkg/indexers"
 	"github.com/kcp-dev/kcp/pkg/informer"
 	"github.com/kcp-dev/kcp/pkg/reconciler/apis/apibinding"
 	"github.com/kcp-dev/kcp/pkg/reconciler/apis/apibindingdeletion"
@@ -68,6 +70,7 @@ import (
 	"github.com/kcp-dev/kcp/pkg/reconciler/tenancy/clusterworkspacedeletion"
 	"github.com/kcp-dev/kcp/pkg/reconciler/tenancy/clusterworkspaceshard"
 	"github.com/kcp-dev/kcp/pkg/reconciler/tenancy/clusterworkspacetype"
+	"github.com/kcp-dev/kcp/pkg/reconciler/tenancy/initialization"
 	workloadsapiexport "github.com/kcp-dev/kcp/pkg/reconciler/workload/apiexport"
 	workloadsapiexportcreate "github.com/kcp-dev/kcp/pkg/reconciler/workload/apiexportcreate"
 	"github.com/kcp-dev/kcp/pkg/reconciler/workload/defaultplacement"
@@ -77,6 +80,7 @@ import (
 	workloadresource "github.com/kcp-dev/kcp/pkg/reconciler/workload/resource"
 	synctargetcontroller "github.com/kcp-dev/kcp/pkg/reconciler/workload/synctarget"
 	"github.com/kcp-dev/kcp/pkg/reconciler/workload/synctargetexports"
+	"github.com/kcp-dev/kcp/pkg/virtual/initializingworkspaces"
 )
 
 func postStartHookName(controllerName string) string {
@@ -676,6 +680,66 @@ func (s *Server) installAPIBindingController(ctx context.Context, config *rest.C
 
 		go apibindingDeletionController.Start(goContext(hookContext), 10)
 
+		return nil
+	})
+}
+
+func (s *Server) installAPIBinderController(ctx context.Context, config *rest.Config, server *genericapiserver.GenericAPIServer) error {
+	// Client used to create APIBindings within the initializing workspace
+	config = rest.CopyConfig(config)
+	kcpclienthelper.SetMultiClusterRoundTripper(config)
+	config = rest.AddUserAgent(config, initialization.ControllerName)
+	config.Host = fmt.Sprintf("https://%v/services/%v/%v", s.GenericConfig.ExternalAddress, initializingworkspaces.VirtualWorkspaceName, tenancyv1alpha1.ClusterWorkspaceAPIBindingsInitializer)
+	initializingWorkspacesKcpClusterClient, err := kcpclient.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+
+	// Wildcard client used for informers
+	informerCfg := rest.CopyConfig(config)
+	kcpclienthelper.SetCluster(informerCfg, logicalcluster.Wildcard)
+	informerClient, err := kcpclient.NewForConfig(informerCfg)
+	if err != nil {
+		return err
+	}
+	initializingWorkspacesKcpInformers := kcpexternalversions.NewSharedInformerFactoryWithOptions(
+		informerClient,
+		resyncPeriod,
+		kcpexternalversions.WithExtraClusterScopedIndexers(indexers.ClusterScoped()),
+		kcpexternalversions.WithExtraNamespaceScopedIndexers(indexers.NamespaceScoped()),
+	)
+
+	c, err := initialization.NewAPIBinder(
+		initializingWorkspacesKcpClusterClient,
+		initializingWorkspacesKcpInformers.Tenancy().V1alpha1().ClusterWorkspaces(),
+		s.KcpSharedInformerFactory.Tenancy().V1alpha1().ClusterWorkspaceTypes(),
+		s.KcpSharedInformerFactory.Apis().V1alpha1().APIBindings(),
+		s.KcpSharedInformerFactory.Apis().V1alpha1().APIExports(),
+	)
+	if err != nil {
+		return err
+	}
+
+	return server.AddPostStartHook(postStartHookName(initialization.ControllerName), func(hookContext genericapiserver.PostStartHookContext) error {
+		logger := klog.FromContext(ctx).WithValues("postStartHook", postStartHookName(initialization.ControllerName))
+
+		if err := s.waitForSync(hookContext.StopCh); err != nil {
+			logger.Error(err, "failed to finish post-start-hook")
+			return nil // don't klog.Fatal. This only happens when context is cancelled.
+		}
+
+		initializingWorkspacesKcpInformers.Start(hookContext.StopCh)
+		initializingWorkspacesKcpInformers.WaitForCacheSync(hookContext.StopCh)
+
+		if err := wait.PollImmediateInfiniteWithContext(goContext(hookContext), time.Millisecond*100, func(ctx context.Context) (bool, error) {
+			initWSSynced := initializingWorkspacesKcpInformers.Tenancy().V1alpha1().ClusterWorkspaces().Informer().HasSynced()
+			return initWSSynced, nil
+		}); err != nil {
+			logger.Error(err, "failed to finish post-start-hook")
+			return nil // don't klog.Fatal. This only happens when context is cancelled.
+		}
+
+		go c.Start(goContext(hookContext), 2)
 		return nil
 	})
 }

@@ -52,6 +52,26 @@ spec:
                 description: additionalWorkspaceLabels are a set of labels that will
                   be added to a ClusterWorkspace on creation.
                 type: object
+              defaultAPIBindings:
+                description: defaultAPIBindings are the APIs to bind during initialization
+                  of workspaces created from this type. The APIBinding names will
+                  be generated dynamically.
+                items:
+                  description: APIExportReference provides the fields necessary to
+                    resolve an APIExport.
+                  properties:
+                    name:
+                      description: name is the name of the APIExport.
+                      type: string
+                    workspacePath:
+                      description: workspacePath is the fully-qualified path to the
+                        workspace containing the APIExport.
+                      type: string
+                  required:
+                  - name
+                  - workspacePath
+                  type: object
+                type: array
               defaultChildWorkspaceType:
                 default:
                   name: universal

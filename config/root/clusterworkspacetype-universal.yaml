@@ -4,6 +4,15 @@ metadata:
   name: universal
 spec:
   initializer: true
+  defaultAPIBindings:
+  - workspacePath: root
+    name: tenancy.kcp.dev
+  - workspacePath: root
+    name: scheduling.kcp.dev
+  - workspacePath: root
+    name: workload.kcp.dev
+  - workspacePath: root
+    name: apiresource.kcp.dev
   defaultChildren:
     types:
     - name: universal

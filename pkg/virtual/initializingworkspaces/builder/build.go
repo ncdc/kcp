@@ -236,7 +236,7 @@ func BuildVirtualWorkspace(
 
 				rawInfo, ok := clusterWorkspace.Annotations[tenancyv1alpha1.ExperimentalClusterWorkspaceOwnerAnnotationKey]
 				if !ok {
-					http.Error(writer, fmt.Sprintf("cluster %q had no user recorded", parent), http.StatusInternalServerError)
+					http.Error(writer, fmt.Sprintf("workspace %s|%s had no user recorded", parent, name), http.StatusInternalServerError)
 					return
 				}
 				var info authenticationv1.UserInfo
