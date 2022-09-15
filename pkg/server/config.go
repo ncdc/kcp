@@ -56,7 +56,7 @@ import (
 	kcpfeatures "github.com/kcp-dev/kcp/pkg/features"
 	"github.com/kcp-dev/kcp/pkg/indexers"
 	"github.com/kcp-dev/kcp/pkg/informer"
-	bootstrap "github.com/kcp-dev/kcp/pkg/server/bootstrap"
+	"github.com/kcp-dev/kcp/pkg/server/bootstrap"
 	kcpfilters "github.com/kcp-dev/kcp/pkg/server/filters"
 	kcpserveroptions "github.com/kcp-dev/kcp/pkg/server/options"
 	"github.com/kcp-dev/kcp/pkg/server/options/batteries"
@@ -322,7 +322,10 @@ func NewConfig(opts *kcpserveroptions.CompletedOptions) (*Config, error) {
 		if kcpfeatures.DefaultFeatureGate.Enabled(kcpfeatures.SyncerTunnel) {
 			apiHandler = tunneler.WithSyncerTunnel(apiHandler)
 		}
-		apiHandler = WithWorkspaceProjection(apiHandler, shardVirtualWorkspaceURL)
+		if shardVirtualWorkspaceURL != nil {
+			apiHandler = WithVirtualWorkspacesRedirect(apiHandler, shardVirtualWorkspaceURL)
+		}
+		apiHandler = WithWorkspaceProjection(apiHandler)
 		apiHandler = kcpfilters.WithAuditEventClusterAnnotation(apiHandler)
 		apiHandler = WithAuditAnnotation(apiHandler) // Must run before any audit annotation is made
 		apiHandler = kcpfilters.WithClusterScope(apiHandler)

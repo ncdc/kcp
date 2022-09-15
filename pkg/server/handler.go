@@ -104,9 +104,34 @@ func WithAuditAnnotation(handler http.Handler) http.HandlerFunc {
 	})
 }
 
+// WithVirtualWorkspacesRedirect translates any loopback client requests to the virtual workspaces server to a
+// redirect to the shard virtual workspace URL if it is set.
+func WithVirtualWorkspacesRedirect(apiHandler http.Handler, shardVirtualWorkspaceURL *url.URL) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		logger := klog.FromContext(req.Context())
+
+		if !strings.HasPrefix(req.URL.Path, "/services/") {
+			apiHandler.ServeHTTP(w, req)
+			return
+		}
+
+		if shardVirtualWorkspaceURL == nil {
+			apiHandler.ServeHTTP(w, req)
+			return
+		}
+
+		u := *req.URL // shallow copy
+		u.RawQuery = req.URL.RawQuery
+		u.Host = shardVirtualWorkspaceURL.Host
+
+		logger.V(4).WithValues("redirect", u.String()).Info("redirecting virtual workspace request")
+		http.Redirect(w, req, u.String(), http.StatusTemporaryRedirect)
+	}
+}
+
 // WithWorkspaceProjection maps the personal virtual workspace "workspaces" resource into the cluster
 // workspace URL space. This means you can do `kubectl get workspaces` from an org workspace.
-func WithWorkspaceProjection(apiHandler http.Handler, shardVirtualWorkspaceURL *url.URL) http.HandlerFunc {
+func WithWorkspaceProjection(apiHandler http.Handler) http.HandlerFunc {
 	toRedirectPath := path.Join("/apis", tenancyv1beta1.SchemeGroupVersion.Group, tenancyv1beta1.SchemeGroupVersion.Version, "workspaces/")
 	getHomeWorkspaceRequestPath := path.Join(toRedirectPath, "~")
 
@@ -132,15 +157,6 @@ func WithWorkspaceProjection(apiHandler http.Handler, shardVirtualWorkspaceURL *
 			logger = logger.WithValues("from", path.Join(cluster.Name.Path(), req.URL.Path), "to", newPath)
 			logger.V(4).Info("rewriting path")
 			req.URL.Path = newPath
-			if shardVirtualWorkspaceURL != nil {
-				u := *req.URL // shallow copy
-				u.RawQuery = req.URL.RawQuery
-				u.Host = shardVirtualWorkspaceURL.Host
-
-				logger.V(4).WithValues("redirect", u.String()).Info("redirecting virtual workspace request")
-				http.Redirect(w, req, u.String(), http.StatusTemporaryRedirect)
-				return
-			}
 		}
 
 		apiHandler.ServeHTTP(w, req)
