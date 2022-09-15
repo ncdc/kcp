@@ -1,9 +1,12 @@
 /*
 Copyright 2022 The KCP Authors.
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
+
     http://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +19,6 @@ package initialization
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -74,14 +76,15 @@ func NewAPIBinder(
 		listAPIBindings: func(clusterName logicalcluster.Name) ([]*apisv1alpha1.APIBinding, error) {
 			return indexers.ByIndex[*apisv1alpha1.APIBinding](apiBindingsInformer.Informer().GetIndexer(), indexers.ByLogicalCluster, clusterName.String())
 		},
+		getAPIBinding: func(clusterName logicalcluster.Name, name string) (*apisv1alpha1.APIBinding, error) {
+			return apiBindingsInformer.Lister().Get(clusters.ToClusterAwareKey(clusterName, name))
+		},
 		createAPIBinding: func(ctx context.Context, clusterName logicalcluster.Name, binding *apisv1alpha1.APIBinding) (*apisv1alpha1.APIBinding, error) {
 			return kcpClusterClient.ApisV1alpha1().APIBindings().Create(logicalcluster.WithCluster(ctx, clusterName), binding, metav1.CreateOptions{})
 		},
 		deleteAPIBinding: func(ctx context.Context, clusterName logicalcluster.Name, bindingName string) error {
 			return kcpClusterClient.ApisV1alpha1().APIBindings().Delete(logicalcluster.WithCluster(ctx, clusterName), bindingName, metav1.DeleteOptions{})
 		},
-
-		createdBindings: make(map[logicalcluster.Name]map[tenancyv1alpha1.APIExportReference]struct{}),
 
 		getAPIExport: func(clusterName logicalcluster.Name, name string) (*apisv1alpha1.APIExport, error) {
 			return apiExportsInformer.Lister().Get(clusters.ToClusterAwareKey(clusterName, name))
@@ -90,18 +93,16 @@ func NewAPIBinder(
 		commit: committer.NewCommitter[*tenancyv1alpha1.ClusterWorkspace, *tenancyv1alpha1.ClusterWorkspaceSpec, *tenancyv1alpha1.ClusterWorkspaceStatus](kcpClusterClient.TenancyV1alpha1().ClusterWorkspaces()),
 	}
 
-	c.transitiveTypeResolver = &admission.TransitiveTypeResolver{
-		Getter: c.getClusterWorkspaceType,
-	}
+	c.transitiveTypeResolver = admission.NewTransitiveTypeResolver(c.getClusterWorkspaceType)
 
 	logger := logging.WithReconciler(klog.Background(), ControllerName)
 
 	clusterWorkspaceInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			c.enqueueClusterWorkspace(obj, logger, "")
+			c.enqueueClusterWorkspace(obj, logger)
 		},
 		DeleteFunc: func(obj interface{}) {
-			c.enqueueClusterWorkspace(obj, logger, "")
+			c.enqueueClusterWorkspace(obj, logger)
 		},
 	})
 
@@ -139,39 +140,43 @@ type APIBinder struct {
 	listClusterWorkspaces   func() ([]*tenancyv1alpha1.ClusterWorkspace, error)
 
 	listAPIBindings  func(clusterName logicalcluster.Name) ([]*apisv1alpha1.APIBinding, error)
+	getAPIBinding    func(clusterName logicalcluster.Name, name string) (*apisv1alpha1.APIBinding, error)
 	createAPIBinding func(ctx context.Context, clusterName logicalcluster.Name, binding *apisv1alpha1.APIBinding) (*apisv1alpha1.APIBinding, error)
 	deleteAPIBinding func(ctx context.Context, clusterName logicalcluster.Name, bindingName string) error
 
-	createdBindingsLock sync.Mutex
-	createdBindings     map[logicalcluster.Name]map[tenancyv1alpha1.APIExportReference]struct{}
-
 	getAPIExport func(clusterName logicalcluster.Name, name string) (*apisv1alpha1.APIExport, error)
 
-	transitiveTypeResolver *admission.TransitiveTypeResolver
+	transitiveTypeResolver transitiveTypeResolver
 
 	// commit creates a patch and submits it, if needed.
 	commit func(ctx context.Context, new, old *clusterWorkspaceResource) error
 }
 
-func (b *APIBinder) enqueueClusterWorkspace(obj interface{}, logger logr.Logger, logSuffix string) {
+type transitiveTypeResolver interface {
+	Resolve(t *tenancyv1alpha1.ClusterWorkspaceType) ([]*tenancyv1alpha1.ClusterWorkspaceType, error)
+}
+
+func (b *APIBinder) enqueueClusterWorkspace(obj interface{}, logger logr.Logger) {
 	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 	if err != nil {
 		runtime.HandleError(err)
 		return
 	}
 
-	logging.WithQueueKey(logger, key).V(2).Info(fmt.Sprintf("queueing ClusterWorkspace%s", logSuffix))
+	logging.WithQueueKey(logger, key).V(2).Info("queueing ClusterWorkspace")
 	b.queue.Add(key)
 }
 
 func (b *APIBinder) enqueueAPIBinding(obj interface{}, logger logr.Logger) {
-	metaObj, ok := obj.(metav1.Object)
+	apiBinding, ok := obj.(*apisv1alpha1.APIBinding)
 	if !ok {
-		runtime.HandleError(fmt.Errorf("obj is supposed to be a metav1.Object, but is %T", obj))
+		runtime.HandleError(fmt.Errorf("expected APIBinding, got %T", obj))
 		return
 	}
-	clusterName := logicalcluster.From(metaObj)
 
+	logger = logging.WithObject(logger, apiBinding)
+
+	clusterName := logicalcluster.From(apiBinding)
 	clusterWorkspace, err := b.getClusterWorkspace(clusterName)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -179,12 +184,12 @@ func (b *APIBinder) enqueueAPIBinding(obj interface{}, logger logr.Logger) {
 			return
 		}
 
-		parentClusterName, clusterWorkspaceName := clusters.SplitClusterAwareKey(clusterName.String())
-		logger.Error(err, "failed to get ClusterWorkspace from lister", "parentCluster", parentClusterName, "clusterWorkspace", clusterWorkspaceName)
+		parent, workspace := clusterName.Split()
+		logger.Error(err, "failed to get ClusterWorkspace from lister", "parent", parent, "workspace", workspace)
 		return // nothing we can do here
 	}
 
-	b.enqueueClusterWorkspace(clusterWorkspace, logger, fmt.Sprintf(" because of APIBinding %s", metaObj.GetName()))
+	b.enqueueClusterWorkspace(clusterWorkspace, logger)
 }
 
 // enqueueClusterWorkspaceType enqueues all clusterworkspaces (which are only those that are initializing, because of
@@ -207,7 +212,8 @@ func (b *APIBinder) enqueueClusterWorkspaceType(obj interface{}, logger logr.Log
 	}
 
 	for _, ws := range list {
-		b.enqueueClusterWorkspace(ws, logger, fmt.Sprintf(" because of ClusterWorkspaceType %s|%s", logicalcluster.From(cwt), cwt.GetName()))
+		logger := logging.WithObject(logger, ws)
+		b.enqueueClusterWorkspace(ws, logger)
 	}
 }
 
@@ -263,13 +269,14 @@ func (b *APIBinder) processNextWorkItem(ctx context.Context) bool {
 
 func (b *APIBinder) process(ctx context.Context, key string) error {
 	logger := klog.FromContext(ctx)
-	startTime := time.Now()
 
-	defer func() {
-		logger.V(4).Info("finished syncing", "duration", time.Since(startTime))
-	}()
+	_, clusterAwareName, err := cache.SplitMetaNamespaceKey(key)
+	if err != nil {
+		logger.Error(err, "unable to decode key")
+		return nil
+	}
 
-	parent, workspace := clusters.SplitClusterAwareKey(key)
+	parent, workspace := clusters.SplitClusterAwareKey(clusterAwareName)
 	clusterName := parent.Join(workspace)
 
 	clusterWorkspace, err := b.getClusterWorkspace(clusterName)

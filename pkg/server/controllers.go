@@ -732,8 +732,12 @@ func (s *Server) installAPIBinderController(ctx context.Context, config *rest.Co
 		initializingWorkspacesKcpInformers.WaitForCacheSync(hookContext.StopCh)
 
 		if err := wait.PollImmediateInfiniteWithContext(goContext(hookContext), time.Millisecond*100, func(ctx context.Context) (bool, error) {
-			initWSSynced := initializingWorkspacesKcpInformers.Tenancy().V1alpha1().ClusterWorkspaces().Informer().HasSynced()
-			return initWSSynced, nil
+			synced := initializingWorkspacesKcpInformers.Tenancy().V1alpha1().ClusterWorkspaces().Informer().HasSynced() &&
+				s.KcpSharedInformerFactory.Tenancy().V1alpha1().ClusterWorkspaceTypes().Informer().HasSynced() &&
+				s.KcpSharedInformerFactory.Apis().V1alpha1().APIBindings().Informer().HasSynced() &&
+				s.KcpSharedInformerFactory.Apis().V1alpha1().APIExports().Informer().HasSynced()
+
+			return synced, nil
 		}); err != nil {
 			logger.Error(err, "failed to finish post-start-hook")
 			return nil // don't klog.Fatal. This only happens when context is cancelled.

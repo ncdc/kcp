@@ -231,11 +231,11 @@ type ClusterWorkspaceTypeSpec struct {
 
 // APIExportReference provides the fields necessary to resolve an APIExport.
 type APIExportReference struct {
-	// workspacePath is the fully-qualified path to the workspace containing the APIExport.
+	// path is the fully-qualified path to the workspace containing the APIExport.
 	//
 	// +required
 	// +kubebuilder:Required
-	WorkspacePath string `json:"workspacePath"`
+	Path string `json:"path"`
 
 	// name is the name of the APIExport.
 	//
@@ -341,7 +341,6 @@ type ClusterWorkspaceTypeList struct {
 // ClusterWorkspaceInitializer is a unique string corresponding to a cluster workspace
 // initialization controller for the given type of workspaces.
 //
-// TODO: Add tests for this regex
 // +kubebuilder:validation:Pattern:="^(root(:[a-z0-9]([-a-z0-9]*[a-z0-9])?)*(:[a-z][a-z0-9]([-a-z0-9]*[a-z0-9])?))|(system:.+)$"
 type ClusterWorkspaceInitializer string
 
@@ -425,19 +424,6 @@ const (
 	// WorkspaceInitializedInitializerExists reason in WorkspaceInitialized condition means that there is at least
 	// one initializer still left.
 	WorkspaceInitializedInitializerExists = "InitializerExists"
-
-	// WorkspaceAPIBindingsInitialized represents the status of the initial APIBindings for the workspace.
-	WorkspaceAPIBindingsInitialized conditionsv1alpha1.ConditionType = "APIBindingsInitialized"
-	// WorkspaceInitializedWaitingOnAPIBindings is a reason for the APIBindingsInitialized condition that indicates
-	// at least one APIBinding is not ready.
-	WorkspaceInitializedWaitingOnAPIBindings = "WaitingOnAPIBindings"
-	// WorkspaceInitializedClusterWorkspaceTypeInvalid is a reason for the APIBindingsInitialized
-	// condition that indicates something is invalid with the ClusterWorkspaceType (e.g. a cycle trying
-	// to resolve all the transitive types).
-	WorkspaceInitializedClusterWorkspaceTypeInvalid = "ClusterWorkspaceTypeInvalid"
-	// WorkspaceInitializedAPIBindingErrors is a reason for the APIBindingsInitialized condition that indicates there
-	// were errors trying to initialize APIBindings for the workspace.
-	WorkspaceInitializedAPIBindingErrors = "APIBindingErrors"
 )
 
 // ClusterWorkspaceLocation specifies workspace placement information, including current, desired (target), and

@@ -41,7 +41,7 @@ import (
 	tenancyv1alpha1 "github.com/kcp-dev/kcp/pkg/apis/tenancy/v1alpha1"
 	"github.com/kcp-dev/kcp/pkg/authorization/delegated"
 	kcpinformers "github.com/kcp-dev/kcp/pkg/client/informers/externalversions"
-	tenancyv1alpha1lister "github.com/kcp-dev/kcp/pkg/client/listers/tenancy/v1alpha1"
+	tenancylisters "github.com/kcp-dev/kcp/pkg/client/listers/tenancy/v1alpha1"
 )
 
 const (
@@ -55,11 +55,12 @@ func Register(plugins *admission.Plugins) {
 				Handler:          admission.NewHandler(admission.Create, admission.Update),
 				createAuthorizer: delegated.NewDelegatedAuthorizer,
 			}
-			plugin.transitiveTypeResolver = TransitiveTypeResolver{
-				Getter: func(cluster logicalcluster.Name, name string) (*tenancyv1alpha1.ClusterWorkspaceType, error) {
+			plugin.transitiveTypeResolver = NewTransitiveTypeResolver(
+				func(cluster logicalcluster.Name, name string) (*tenancyv1alpha1.ClusterWorkspaceType, error) {
 					return plugin.typeLister.Get(clusters.ToClusterAwareKey(cluster, name))
 				},
-			}
+			)
+
 			return plugin, nil
 		})
 }
@@ -70,10 +71,10 @@ func Register(plugins *admission.Plugins) {
 //     transitions to the Initializing state.
 type clusterWorkspaceTypeExists struct {
 	*admission.Handler
-	typeLister             tenancyv1alpha1lister.ClusterWorkspaceTypeLister
-	workspaceLister        tenancyv1alpha1lister.ClusterWorkspaceLister
+	typeLister             tenancylisters.ClusterWorkspaceTypeLister
+	workspaceLister        tenancylisters.ClusterWorkspaceLister
 	deepSARClient          kubernetesclient.ClusterInterface
-	transitiveTypeResolver TransitiveTypeResolver
+	transitiveTypeResolver *transitiveTypeResolver
 
 	createAuthorizer delegated.DelegatedAuthorizerFactory
 }
@@ -430,12 +431,18 @@ func addAdditionalWorkspaceLabels(
 }
 
 // TODO: Move this out of admission to some shared location
-type TransitiveTypeResolver struct {
-	Getter func(cluster logicalcluster.Name, name string) (*tenancyv1alpha1.ClusterWorkspaceType, error)
+type transitiveTypeResolver struct {
+	getter func(cluster logicalcluster.Name, name string) (*tenancyv1alpha1.ClusterWorkspaceType, error)
+}
+
+func NewTransitiveTypeResolver(getter func(cluster logicalcluster.Name, name string) (*tenancyv1alpha1.ClusterWorkspaceType, error)) *transitiveTypeResolver {
+	return &transitiveTypeResolver{
+		getter: getter,
+	}
 }
 
 // Resolve returns all ClusterWorkspaceTypes that a given Type extends.
-func (r *TransitiveTypeResolver) Resolve(t *tenancyv1alpha1.ClusterWorkspaceType) ([]*tenancyv1alpha1.ClusterWorkspaceType, error) {
+func (r *transitiveTypeResolver) Resolve(t *tenancyv1alpha1.ClusterWorkspaceType) ([]*tenancyv1alpha1.ClusterWorkspaceType, error) {
 	ret, err := r.resolve(t, map[string]bool{}, map[string]bool{}, []string{})
 	if err != nil {
 		return nil, err
@@ -443,7 +450,7 @@ func (r *TransitiveTypeResolver) Resolve(t *tenancyv1alpha1.ClusterWorkspaceType
 	return append(ret, t), nil
 }
 
-func (r *TransitiveTypeResolver) resolve(cwt *tenancyv1alpha1.ClusterWorkspaceType, seen, pathSeen map[string]bool, path []string) ([]*tenancyv1alpha1.ClusterWorkspaceType, error) {
+func (r *transitiveTypeResolver) resolve(cwt *tenancyv1alpha1.ClusterWorkspaceType, seen, pathSeen map[string]bool, path []string) ([]*tenancyv1alpha1.ClusterWorkspaceType, error) {
 	qualifiedName := logicalcluster.From(cwt).Join(cwt.Name).String()
 	seen[qualifiedName] = true
 	pathSeen[qualifiedName] = true
@@ -468,7 +475,7 @@ func (r *TransitiveTypeResolver) resolve(cwt *tenancyv1alpha1.ClusterWorkspaceTy
 			continue // already seen trunk
 		}
 
-		baseType, err := r.Getter(logicalcluster.New(baseTypeRef.Path), tenancyv1alpha1.ObjectName(baseTypeRef.Name))
+		baseType, err := r.getter(logicalcluster.New(baseTypeRef.Path), tenancyv1alpha1.ObjectName(baseTypeRef.Name))
 		if err != nil {
 			return nil, fmt.Errorf("unable to find inherited workspace type %s", qualifiedName)
 		}
