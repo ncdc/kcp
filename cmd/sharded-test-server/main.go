@@ -24,13 +24,14 @@ import (
 	"os"
 	"strings"
 
-	shard "github.com/kcp-dev/kcp/cmd/test-server/kcp"
 	machineryutilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apiserver/pkg/authentication/user"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/klog/v2"
 
 	"github.com/kcp-dev/kcp/cmd/sharded-test-server/third_party/library-go/crypto"
+	shard "github.com/kcp-dev/kcp/cmd/test-server/kcp"
 	"github.com/kcp-dev/kcp/pkg/authorization/bootstrap"
 )
 
@@ -62,6 +63,8 @@ func main() {
 func start(proxyFlags, shardFlags []string, logDirPath, workDirPath string, numberOfShards int) error {
 	ctx, cancelFn := context.WithCancel(genericapiserver.SetupSignalContext())
 	defer cancelFn()
+
+	ctx = klog.NewContext(ctx, klog.Background())
 
 	// create request header CA and client cert for front-proxy to connect to shards
 	requestHeaderCA, err := crypto.MakeSelfSignedCA(".kcp/requestheader-ca.crt", ".kcp/requestheader-ca.key", ".kcp/requestheader-ca-serial.txt", "kcp-front-proxy-requestheader-ca", 365)
@@ -118,7 +121,7 @@ func start(proxyFlags, shardFlags []string, logDirPath, workDirPath string, numb
 	var shards []*shard.Shard
 	shardsErrCh := make(chan shardErrTuple)
 	for i := 0; i < numberOfShards; i++ {
-		shard, err := newShard(ctx, i, shardFlags, servingCA, hostIP.String(), logDirPath, workDirPath)
+		shard, err := newShard(ctx, i, shardFlags, servingCA, hostIP.String(), logDirPath, workDirPath, clientCA)
 		if err != nil {
 			return err
 		}
@@ -140,7 +143,7 @@ func start(proxyFlags, shardFlags []string, logDirPath, workDirPath string, numb
 		vwPort = "7444"
 
 		for i := 0; i < numberOfShards; i++ {
-			virtualWorkspaceErrCh, err := startVirtual(ctx, i, logDirPath)
+			virtualWorkspaceErrCh, err := startVirtual(ctx, i, servingCA, hostIP.String(), logDirPath, workDirPath)
 			if err != nil {
 				return fmt.Errorf("error starting virtual workspaces server %d: %w", i, err)
 			}

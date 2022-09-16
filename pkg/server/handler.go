@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httputil"
 	_ "net/http/pprof"
 	"net/url"
 	"path"
@@ -46,6 +47,7 @@ import (
 	apiserverdiscovery "k8s.io/apiserver/pkg/endpoints/discovery"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	transport2 "k8s.io/client-go/transport"
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/genericcontrolplane/aggregator"
 
@@ -106,7 +108,7 @@ func WithAuditAnnotation(handler http.Handler) http.HandlerFunc {
 
 // WithVirtualWorkspacesRedirect translates any loopback client requests to the virtual workspaces server to a
 // redirect to the shard virtual workspace URL if it is set.
-func WithVirtualWorkspacesRedirect(apiHandler http.Handler, shardVirtualWorkspaceURL *url.URL) http.HandlerFunc {
+func WithVirtualWorkspacesRedirect(apiHandler http.Handler, shardVirtualWorkspaceURL *url.URL, transport http.RoundTripper) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		logger := klog.FromContext(req.Context())
 
@@ -115,17 +117,36 @@ func WithVirtualWorkspacesRedirect(apiHandler http.Handler, shardVirtualWorkspac
 			return
 		}
 
-		if shardVirtualWorkspaceURL == nil {
+		if shardVirtualWorkspaceURL == nil || transport == nil {
 			apiHandler.ServeHTTP(w, req)
 			return
 		}
 
-		u := *req.URL // shallow copy
-		u.RawQuery = req.URL.RawQuery
-		u.Host = shardVirtualWorkspaceURL.Host
+		user, ok := request.UserFrom(req.Context())
+		if !ok {
+			http.Error(w, "no user", http.StatusBadRequest)
+			return
+		}
 
-		logger.V(4).WithValues("redirect", u.String()).Info("redirecting virtual workspace request")
-		http.Redirect(w, req, u.String(), http.StatusTemporaryRedirect)
+		proxy := &httputil.ReverseProxy{
+			Director: func(r *http.Request) {
+				r.URL.Scheme = shardVirtualWorkspaceURL.Scheme
+				r.URL.Host = shardVirtualWorkspaceURL.Host
+				delete(r.Header, "X-Forwarded-For")
+				logger.V(4).Info("proxying virtual workspace request", "inURL", req.URL, "outURL", r.URL)
+
+			},
+			Transport: transport2.NewImpersonatingRoundTripper(
+				transport2.ImpersonationConfig{
+					UserName: user.GetName(),
+					UID:      user.GetUID(),
+					Groups:   user.GetGroups(),
+					Extra:    user.GetExtra(),
+				},
+				transport,
+			),
+		}
+		proxy.ServeHTTP(w, req)
 	}
 }
 

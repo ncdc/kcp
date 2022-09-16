@@ -27,17 +27,36 @@ import (
 	"github.com/abiosoft/lineprefix"
 	"github.com/fatih/color"
 
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/klog/v2"
+
+	"github.com/kcp-dev/kcp/cmd/sharded-test-server/third_party/library-go/crypto"
 	"github.com/kcp-dev/kcp/cmd/test-server/helpers"
 	"github.com/kcp-dev/kcp/test/e2e/framework"
 )
 
-func startVirtual(ctx context.Context, index int, logDirPath string) (<-chan error, error) {
+func startVirtual(ctx context.Context, index int, servingCA *crypto.CA, hostIP string, logDirPath, workDirPath string) (<-chan error, error) {
+	logger := klog.FromContext(ctx)
+
 	prefix := fmt.Sprintf("VW-%d", index)
 	yellow := color.New(color.BgYellow, color.FgHiWhite).SprintFunc()
 	out := lineprefix.New(
 		lineprefix.Prefix(yellow(prefix)),
 		lineprefix.Color(color.New(color.FgHiYellow)),
 	)
+
+	// create serving cert
+	hostnames := sets.NewString("localhost", hostIP)
+	logger.Info("Creating vw server serving cert", "index", index, "hostnames", hostnames.List())
+	cert, err := servingCA.MakeServerCert(hostnames, 365)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create server cert: %w", err)
+	}
+	servingKeyFile := filepath.Join(workDirPath, fmt.Sprintf(".kcp-virtual-workspaces-%d/apiserver.key", index))
+	servingCertFile := filepath.Join(workDirPath, fmt.Sprintf(".kcp-virtual-workspaces-%d/apiserver.crt", index))
+	if err := cert.WriteCertConfigFile(servingCertFile, servingKeyFile); err != nil {
+		return nil, fmt.Errorf("failed to write server cert: %w", err)
+	}
 
 	commandLine := framework.DirectOrGoRunCommand("virtual-workspaces")
 	commandLine = append(
@@ -47,12 +66,13 @@ func startVirtual(ctx context.Context, index int, logDirPath string) (<-chan err
 		fmt.Sprintf("--authentication-kubeconfig=.kcp-%d/admin.kubeconfig", index),
 		"--authentication-skip-lookup",
 		"--client-ca-file=.kcp/client-ca.crt",
-		"--tls-private-key-file=.kcp/serving-ca.key",
-		"--tls-cert-file=.kcp/serving-ca.crt",
+		fmt.Sprintf("--tls-private-key-file=%s", servingKeyFile),
+		fmt.Sprintf("--tls-cert-file=%s", servingCertFile),
 		"--requestheader-client-ca-file=.kcp/requestheader-ca.crt",
 		"--requestheader-username-headers=X-Remote-User",
 		"--requestheader-group-headers=X-Remote-Group",
 		fmt.Sprintf("--secure-port=%d", 7444+index),
+		"--v=4",
 	)
 	fmt.Fprintf(out, "running: %v\n", strings.Join(commandLine, " "))
 

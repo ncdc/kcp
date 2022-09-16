@@ -18,7 +18,10 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	_ "net/http/pprof"
 	"net/url"
@@ -280,6 +283,29 @@ func NewConfig(opts *kcpserveroptions.CompletedOptions) (*Config, error) {
 		}
 	}
 
+	var virtualWorkspaceServerProxyTransport http.RoundTripper
+	if opts.Extra.ShardClientCertFile != "" && opts.Extra.ShardClientKeyFile != "" && opts.Extra.ShardVirtualWorkspaceCAFile != "" {
+		caCert, err := ioutil.ReadFile(opts.Extra.ShardVirtualWorkspaceCAFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read CA file %q: %w", opts.Extra.ShardVirtualWorkspaceCAFile, err)
+		}
+
+		caCertPool := x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM(caCert)
+
+		cert, err := tls.LoadX509KeyPair(opts.Extra.ShardClientCertFile, opts.Extra.ShardClientKeyFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load client certificate %q or key %q: %w", opts.Extra.ShardClientCertFile, opts.Extra.ShardClientKeyFile, err)
+		}
+
+		transport := http.DefaultTransport.(*http.Transport).Clone()
+		transport.TLSClientConfig = &tls.Config{
+			Certificates: []tls.Certificate{cert},
+			RootCAs:      caCertPool,
+		}
+		virtualWorkspaceServerProxyTransport = transport
+	}
+
 	// preHandlerChainMux is called before the actual handler chain. Note that BuildHandlerChainFunc below
 	// is called multiple times, but only one of the handler chain will actually be used. Hence, we wrap it
 	// to give handlers below one mux.Handle func to call.
@@ -307,6 +333,13 @@ func NewConfig(opts *kcpserveroptions.CompletedOptions) (*Config, error) {
 			)
 		}
 
+		if shardVirtualWorkspaceURL != nil && virtualWorkspaceServerProxyTransport != nil {
+			// Note: this has to come after DefaultBuildHandlerChainBeforeAuthz because it needs to come after
+			// authentication has been processed
+			apiHandler = WithVirtualWorkspacesRedirect(apiHandler, shardVirtualWorkspaceURL, virtualWorkspaceServerProxyTransport)
+		}
+		apiHandler = WithWorkspaceProjection(apiHandler)
+
 		apiHandler = genericapiserver.DefaultBuildHandlerChainBeforeAuthz(apiHandler, genericConfig)
 
 		// this will be replaced in DefaultBuildHandlerChain. So at worst we get twice as many warning.
@@ -322,10 +355,7 @@ func NewConfig(opts *kcpserveroptions.CompletedOptions) (*Config, error) {
 		if kcpfeatures.DefaultFeatureGate.Enabled(kcpfeatures.SyncerTunnel) {
 			apiHandler = tunneler.WithSyncerTunnel(apiHandler)
 		}
-		if shardVirtualWorkspaceURL != nil {
-			apiHandler = WithVirtualWorkspacesRedirect(apiHandler, shardVirtualWorkspaceURL)
-		}
-		apiHandler = WithWorkspaceProjection(apiHandler)
+
 		apiHandler = kcpfilters.WithAuditEventClusterAnnotation(apiHandler)
 		apiHandler = WithAuditAnnotation(apiHandler) // Must run before any audit annotation is made
 		apiHandler = kcpfilters.WithClusterScope(apiHandler)
