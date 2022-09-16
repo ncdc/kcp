@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	kcpcache "github.com/kcp-dev/apimachinery/pkg/cache"
 	"github.com/kcp-dev/logicalcluster/v2"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -157,7 +158,7 @@ type transitiveTypeResolver interface {
 }
 
 func (b *APIBinder) enqueueClusterWorkspace(obj interface{}, logger logr.Logger) {
-	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
+	key, err := kcpcache.DeletionHandlingMetaClusterNamespaceKeyFunc(obj)
 	if err != nil {
 		runtime.HandleError(err)
 		return
@@ -270,13 +271,12 @@ func (b *APIBinder) processNextWorkItem(ctx context.Context) bool {
 func (b *APIBinder) process(ctx context.Context, key string) error {
 	logger := klog.FromContext(ctx)
 
-	_, clusterAwareName, err := cache.SplitMetaNamespaceKey(key)
+	parent, _, workspace, err := kcpcache.SplitMetaClusterNamespaceKey(key)
 	if err != nil {
 		logger.Error(err, "unable to decode key")
 		return nil
 	}
 
-	parent, workspace := clusters.SplitClusterAwareKey(clusterAwareName)
 	clusterName := parent.Join(workspace)
 
 	clusterWorkspace, err := b.getClusterWorkspace(clusterName)

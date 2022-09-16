@@ -344,7 +344,7 @@ type ClusterWorkspaceTypeList struct {
 // +kubebuilder:validation:Pattern:="^(root(:[a-z0-9]([-a-z0-9]*[a-z0-9])?)*(:[a-z][a-z0-9]([-a-z0-9]*[a-z0-9])?))|(system:.+)$"
 type ClusterWorkspaceInitializer string
 
-// ClusterWorkspaxeAPIBindingInitializer is a special-case initializer that waits for APIBindings defined
+// ClusterWorkspaceAPIBindingsInitializer is a special-case initializer that waits for APIBindings defined
 // on a ClusterWorkspaceType to be created.
 const ClusterWorkspaceAPIBindingsInitializer ClusterWorkspaceInitializer = "system:apibindings"
 

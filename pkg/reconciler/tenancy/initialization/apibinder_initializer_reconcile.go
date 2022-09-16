@@ -264,6 +264,7 @@ func generateAPIBindingName(clusterName logicalcluster.Name, exportPath, exportN
 	)
 
 	hash = hash[0:5]
+	// Have to lowercase because Kubernetes names must be lowercase
 	hash = strings.ToLower(hash)
 
 	return fmt.Sprintf("%s-%s", exportNamePrefix, hash)
