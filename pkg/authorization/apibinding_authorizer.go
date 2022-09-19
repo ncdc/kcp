@@ -29,6 +29,7 @@ import (
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 	kubernetesinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/kubernetes/pkg/genericcontrolplane"
 	"k8s.io/kubernetes/plugin/pkg/auth/authorizer/rbac"
 
 	apisv1alpha1 "github.com/kcp-dev/kcp/pkg/apis/apis/v1alpha1"
@@ -179,11 +180,17 @@ func (a *apiBindingAccessAuthorizer) Authorize(ctx context.Context, attr authori
 
 	// If bound, create a rbac authorizer filtered to the cluster.
 	clusterKubeInformer := rbacwrapper.FilterInformers(logicalcluster.From(apiExport), a.versionedInformers.Rbac().V1())
+	bootstrapInformer := rbacwrapper.FilterInformers(genericcontrolplane.LocalAdminCluster, a.versionedInformers.Rbac().V1())
+
+	mergedClusterRoleInformer := rbacwrapper.MergedClusterRoleInformer(clusterKubeInformer.ClusterRoles(), bootstrapInformer.ClusterRoles())
+	mergedRoleInformer := rbacwrapper.MergedRoleInformer(clusterKubeInformer.Roles(), bootstrapInformer.Roles())
+	mergedClusterRoleBindingsInformer := rbacwrapper.MergedClusterRoleBindingInformer(clusterKubeInformer.ClusterRoleBindings(), bootstrapInformer.ClusterRoleBindings())
+
 	clusterAuthorizer := rbac.New(
-		&rbac.RoleGetter{Lister: clusterKubeInformer.Roles().Lister()},
+		&rbac.RoleGetter{Lister: mergedRoleInformer.Lister()},
 		&rbac.RoleBindingLister{Lister: clusterKubeInformer.RoleBindings().Lister()},
-		&rbac.ClusterRoleGetter{Lister: clusterKubeInformer.ClusterRoles().Lister()},
-		&rbac.ClusterRoleBindingLister{Lister: clusterKubeInformer.ClusterRoleBindings().Lister()},
+		&rbac.ClusterRoleGetter{Lister: mergedClusterRoleInformer.Lister()},
+		&rbac.ClusterRoleBindingLister{Lister: mergedClusterRoleBindingsInformer.Lister()},
 	)
 	prefixedAttr := deepCopyAttributes(attr)
 	userInfo := prefixedAttr.User.(*user.DefaultInfo)
