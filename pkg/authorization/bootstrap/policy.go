@@ -34,7 +34,8 @@ const (
 	// in the referenced cluster workspace (capped by maximal permission policy).
 	SystemKcpClusterWorkspaceAdminGroup = "system:kcp:clusterworkspace:admin"
 	// SystemKcpAdminGroup is global admin group. Members of this group have all permissions across all cluster workspaces.
-	SystemKcpAdminGroup = "system:kcp:admin"
+	SystemKcpAdminGroup            = "system:kcp:admin"
+	SystemKcpWorkspaceBootstrapper = "system:kcp:tenancy:workspace-bootstrapper"
 )
 
 // ClusterRoleBindings return default rolebindings to the default roles
@@ -42,6 +43,7 @@ func clusterRoleBindings() []rbacv1.ClusterRoleBinding {
 	return []rbacv1.ClusterRoleBinding{
 		clusterRoleBindingCustomName(rbacv1helpers.NewClusterBinding("cluster-admin").Groups(SystemKcpClusterWorkspaceAdminGroup, SystemKcpAdminGroup).BindingOrDie(), SystemKcpClusterWorkspaceAdminGroup),
 		clusterRoleBindingCustomName(rbacv1helpers.NewClusterBinding("system:kcp:tenancy:reader").Groups(SystemKcpClusterWorkspaceAccessGroup).BindingOrDie(), SystemKcpClusterWorkspaceAccessGroup),
+		clusterRoleBindingCustomName(rbacv1helpers.NewClusterBinding(SystemKcpWorkspaceBootstrapper).Groups(SystemKcpWorkspaceBootstrapper, "apis.kcp.dev:binding:system:kcp:tenancy:workspace-bootstrapper").BindingOrDie(), SystemKcpWorkspaceBootstrapper),
 	}
 }
 
@@ -52,6 +54,13 @@ func clusterRoles() []rbacv1.ClusterRole {
 			Rules: []rbacv1.PolicyRule{
 				rbacv1helpers.NewRule("list", "watch").Groups(tenancy.GroupName).Resources("workspaces").RuleOrDie(), // "get" is by workspace name through workspace VW
 				rbacv1helpers.NewRule(bootstrappolicy.Read...).Groups(tenancy.GroupName).Resources("clusterworkspacetypes").RuleOrDie(),
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: SystemKcpWorkspaceBootstrapper},
+			Rules: []rbacv1.PolicyRule{
+				rbacv1helpers.NewRule("*").Groups("*").Resources("*").RuleOrDie(),
+				rbacv1helpers.NewRule("*").URLs("*").RuleOrDie(),
 			},
 		},
 	}

@@ -304,8 +304,8 @@ func (s *Server) Run(ctx context.Context) error {
 			logger.Info("starting bootstrapping root workspace phase 1")
 			servingCert, _ := delegationChainHead.SecureServingInfo.Cert.CurrentCertKeyContent()
 			if err := configroot.Bootstrap(goContext(hookContext),
-				s.ApiExtensionsClusterClient.Cluster(tenancyv1alpha1.RootCluster).Discovery(),
-				s.DynamicClusterClient.Cluster(tenancyv1alpha1.RootCluster),
+				s.BootstrapApiExtensionsClusterClient.Cluster(tenancyv1alpha1.RootCluster).Discovery(),
+				s.BootstrapDynamicClusterClient.Cluster(tenancyv1alpha1.RootCluster),
 				s.Options.Extra.ShardName,
 				s.Options.Extra.ShardVirtualWorkspaceURL,
 				clientcmdapi.Config{
@@ -379,8 +379,8 @@ func (s *Server) Run(ctx context.Context) error {
 				// the root ws is only present on the root shard
 				logger.Info("starting bootstrapping root compute workspace")
 				if err := configrootcompute.Bootstrap(goContext(hookContext),
-					s.ApiExtensionsClusterClient,
-					s.DynamicClusterClient,
+					s.BootstrapApiExtensionsClusterClient,
+					s.BootstrapDynamicClusterClient,
 					sets.NewString(s.Options.Extra.BatteriesIncluded...),
 				); err != nil {
 					logger.Error(err, "failed to bootstrap root compute workspace")
@@ -413,12 +413,6 @@ func (s *Server) Run(ctx context.Context) error {
 			return err
 		}
 		if err := s.installWorkspaceDeletionController(ctx, controllerConfig); err != nil {
-			return err
-		}
-	}
-
-	if s.Options.HomeWorkspaces.Enabled {
-		if err := s.installHomeWorkspaces(ctx, controllerConfig); err != nil {
 			return err
 		}
 	}

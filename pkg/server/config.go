@@ -53,6 +53,7 @@ import (
 	kcpadmissioninitializers "github.com/kcp-dev/kcp/pkg/admission/initializers"
 	apisv1alpha1 "github.com/kcp-dev/kcp/pkg/apis/apis/v1alpha1"
 	"github.com/kcp-dev/kcp/pkg/authorization"
+	bootstrap2 "github.com/kcp-dev/kcp/pkg/authorization/bootstrap"
 	kcpclient "github.com/kcp-dev/kcp/pkg/client/clientset/versioned"
 	kcpinformers "github.com/kcp-dev/kcp/pkg/client/informers/externalversions"
 	"github.com/kcp-dev/kcp/pkg/embeddedetcd"
@@ -92,12 +93,15 @@ type ExtraConfig struct {
 	shardAdminTokenHash                       []byte
 
 	// clients
-	DynamicClusterClient       dynamic.ClusterInterface
-	KubeClusterClient          kubernetesclient.ClusterInterface
-	DeepSARClient              kubernetesclient.ClusterInterface
-	ApiExtensionsClusterClient apiextensionsclient.ClusterInterface
-	KcpClusterClient           kcpclient.ClusterInterface
-	RootShardKcpClusterClient  kcpclient.ClusterInterface
+	DynamicClusterClient                dynamic.ClusterInterface
+	KubeClusterClient                   kubernetesclient.ClusterInterface
+	DeepSARClient                       kubernetesclient.ClusterInterface
+	ApiExtensionsClusterClient          apiextensionsclient.ClusterInterface
+	KcpClusterClient                    kcpclient.ClusterInterface
+	RootShardKcpClusterClient           kcpclient.ClusterInterface
+	BootstrapDynamicClusterClient       dynamic.ClusterInterface
+	BootstrapApiExtensionsClusterClient apiextensionsclient.ClusterInterface
+	BootstrapKcpClusterClient           kcpclient.ClusterInterface
 
 	// misc
 	preHandlerChainMux   *handlerChainMuxes
@@ -271,6 +275,30 @@ func NewConfig(opts *kcpserveroptions.CompletedOptions) (*Config, error) {
 		c.userToken = userToken
 	}
 
+	bootstrapKcpConfig := rest.CopyConfig(c.identityConfig)
+	bootstrapKcpConfig.Impersonate.UserName = "system:kcp:bootstrapper"
+	bootstrapKcpConfig.Impersonate.Groups = []string{bootstrap2.SystemKcpWorkspaceBootstrapper}
+	bootstrapKcpConfig = rest.AddUserAgent(bootstrapKcpConfig, "kcp-identity-bootstrapper")
+	c.BootstrapKcpClusterClient, err = kcpclient.NewClusterForConfig(bootstrapKcpConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	bootstrapConfig := rest.CopyConfig(c.GenericConfig.LoopbackClientConfig)
+	bootstrapConfig.Impersonate.UserName = "system:kcp:bootstrapper"
+	bootstrapConfig.Impersonate.Groups = []string{bootstrap2.SystemKcpWorkspaceBootstrapper}
+	bootstrapConfig = rest.AddUserAgent(bootstrapConfig, "kcp-bootstrapper")
+
+	c.BootstrapApiExtensionsClusterClient, err = apiextensionsclient.NewClusterForConfig(bootstrapConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	c.BootstrapDynamicClusterClient, err = dynamic.NewClusterForConfig(bootstrapConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	if err := opts.GenericControlPlane.Audit.ApplyTo(c.GenericConfig); err != nil {
 		return nil, err
 	}
@@ -323,6 +351,7 @@ func NewConfig(opts *kcpserveroptions.CompletedOptions) (*Config, error) {
 				genericConfig.Authorization.Authorizer,
 				c.KubeClusterClient,
 				c.KcpClusterClient,
+				c.BootstrapKcpClusterClient,
 				c.KubeSharedInformerFactory,
 				c.KcpSharedInformerFactory,
 				c.GenericConfig.ExternalAddress,
