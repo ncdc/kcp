@@ -28,7 +28,6 @@ import (
 	"strings"
 
 	"github.com/kcp-dev/logicalcluster/v2"
-	"k8s.io/client-go/tools/cache"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -46,6 +45,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	kubernetesinformers "k8s.io/client-go/informers"
 	kubernetesclient "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clusters"
 	"k8s.io/klog/v2"
 
