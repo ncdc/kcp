@@ -106,9 +106,9 @@ func WithAuditAnnotation(handler http.Handler) http.HandlerFunc {
 	})
 }
 
-// WithVirtualWorkspacesRedirect translates any loopback client requests to the virtual workspaces server to a
-// redirect to the shard virtual workspace URL if it is set.
-func WithVirtualWorkspacesRedirect(apiHandler http.Handler, shardVirtualWorkspaceURL *url.URL, transport http.RoundTripper) http.HandlerFunc {
+// WithVirtualWorkspacesRedirectOrProxy translates any loopback client requests to virtual workspaces to either a
+// redirect (virtual workspaces server is in-process) or a proxy (virtual workspaces server is external).
+func WithVirtualWorkspacesRedirectOrProxy(apiHandler http.Handler, shardVirtualWorkspaceURL *url.URL, transport http.RoundTripper) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		logger := klog.FromContext(req.Context())
 
@@ -118,7 +118,8 @@ func WithVirtualWorkspacesRedirect(apiHandler http.Handler, shardVirtualWorkspac
 		}
 
 		if shardVirtualWorkspaceURL == nil || transport == nil {
-			apiHandler.ServeHTTP(w, req)
+			logger.V(4).Info("issuing virtual workspaces redirect", "redirect", req.URL.String())
+			http.Redirect(w, req, req.URL.String(), http.StatusTemporaryRedirect)
 			return
 		}
 
@@ -146,6 +147,8 @@ func WithVirtualWorkspacesRedirect(apiHandler http.Handler, shardVirtualWorkspac
 				transport,
 			),
 		}
+
+		logger.V(4).Info("proxying virtual workspace", "target", req.URL.String())
 		proxy.ServeHTTP(w, req)
 	}
 }

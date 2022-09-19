@@ -333,11 +333,9 @@ func NewConfig(opts *kcpserveroptions.CompletedOptions) (*Config, error) {
 			)
 		}
 
-		if shardVirtualWorkspaceURL != nil && virtualWorkspaceServerProxyTransport != nil {
-			// Note: this has to come after DefaultBuildHandlerChainBeforeAuthz because it needs to come after
-			// authentication has been processed
-			apiHandler = WithVirtualWorkspacesRedirect(apiHandler, shardVirtualWorkspaceURL, virtualWorkspaceServerProxyTransport)
-		}
+		// Note: this has to come after DefaultBuildHandlerChainBeforeAuthz because it needs to come after
+		// authentication has been processed
+		apiHandler = WithVirtualWorkspacesRedirectOrProxy(apiHandler, shardVirtualWorkspaceURL, virtualWorkspaceServerProxyTransport)
 		apiHandler = WithWorkspaceProjection(apiHandler)
 
 		apiHandler = genericapiserver.DefaultBuildHandlerChainBeforeAuthz(apiHandler, genericConfig)
