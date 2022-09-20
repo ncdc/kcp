@@ -19,10 +19,13 @@ package workspaces
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
+	"net"
 	"net/http"
-	"net/url"
+	"os"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -36,6 +39,8 @@ import (
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	machineryutilnet "k8s.io/apimachinery/pkg/util/net"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	kuser "k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/client-go/kubernetes"
@@ -44,6 +49,7 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
 
+	"github.com/kcp-dev/kcp/cmd/sharded-test-server/third_party/library-go/crypto"
 	virtualcommand "github.com/kcp-dev/kcp/cmd/virtual-workspaces/command"
 	virtualoptions "github.com/kcp-dev/kcp/cmd/virtual-workspaces/options"
 	tenancyv1alpha1 "github.com/kcp-dev/kcp/pkg/apis/tenancy/v1alpha1"
@@ -592,25 +598,91 @@ func testWorkspacesVirtualWorkspaces(t *testing.T, standalone bool) {
 	var server framework.RunningServer
 	var virtualWorkspaceServerHost string
 	if standalone {
-		// create port early. We have to hope it is still free when we are ready to start the virtual workspace apiserver.
+		tokenAuthFile := framework.WriteTokenAuthFile(t)
+
+		certDir := t.TempDir()
+		servingCACertFile := filepath.Join(certDir, "serving-ca.crt")
+		servingCAKeyFile := filepath.Join(certDir, "serving-ca.key")
+		servingCASerialFile := filepath.Join(certDir, "serving-ca-serial.txt")
+
+		t.Logf("create server CA to be used to sign shard serving certs")
+		servingCA, err := crypto.MakeSelfSignedCA(servingCACertFile, servingCAKeyFile, servingCASerialFile, "kcp-serving-ca", 365)
+		require.NoError(t, err, "error creating serving CA")
+
+		t.Logf("find external IP to put into certs as valid IPs")
+		hostIP, err := machineryutilnet.ResolveBindAddress(net.IPv4(0, 0, 0, 0))
+		require.NoError(t, err, "error resolving bind address")
+
+		hostnames := sets.NewString("localhost", hostIP.String())
+		t.Logf("creating shard server serving cert with hostnames %v", hostnames)
+		cert, err := servingCA.MakeServerCert(hostnames, 365)
+		require.NoError(t, err, "error creating kcp serving cert")
+		shardCertFile := filepath.Join(certDir, "apiserver.crt")
+		shardKeyFile := filepath.Join(certDir, "apiserver.key")
+		err = cert.WriteCertConfigFile(shardCertFile, shardKeyFile)
+		require.NoError(t, err, "error writing kcp serving cert")
+
+		t.Logf("create client CA")
+		clientCACertFile := filepath.Join(certDir, "client-ca.crt")
+		clientCAKeyFile := filepath.Join(certDir, "client-ca.key")
+		clientCASerialFile := filepath.Join(certDir, "client-ca-serial.txt")
+		clientCA, err := crypto.MakeSelfSignedCA(clientCACertFile, clientCAKeyFile, clientCASerialFile, "kcp-client-ca", 365)
+		require.NoError(t, err, "error creating client CA")
+
+		t.Logf("create shard client cert")
+		shardClientCert := filepath.Join(certDir, "shard-client-cert.crt")
+		shardClientCertKey := filepath.Join(certDir, "shard-client-cert.key")
+		shardUser := &kuser.DefaultInfo{Name: "kcp-server", Groups: []string{"system:masters"}}
+		_, err = clientCA.MakeClientCertificate(shardClientCert, shardClientCertKey, shardUser, 365)
+		if err != nil {
+			fmt.Printf("failed to create shard client cert: %v\n", err)
+			os.Exit(1)
+		}
+
+		t.Logf("create vw client cert")
+		vwClientCert := filepath.Join(certDir, "vw-client-cert.crt")
+		vwClientCertKey := filepath.Join(certDir, "vw-client-cert.key")
+		vwUser := &kuser.DefaultInfo{Name: "vw-server", Groups: []string{"system:masters"}}
+		_, err = clientCA.MakeClientCertificate(vwClientCert, vwClientCertKey, vwUser, 365)
+		if err != nil {
+			fmt.Printf("failed to create shard client cert: %v\n", err)
+			os.Exit(1)
+		}
+
 		portStr, err := framework.GetFreePort(t)
 		require.NoError(t, err)
 
-		tokenAuthFile := framework.WriteTokenAuthFile(t)
 		server = framework.PrivateKcpServer(t,
-			append(framework.TestServerArgsWithTokenAuthFile(tokenAuthFile),
-				"--run-virtual-workspaces=false",
-				fmt.Sprintf("--shard-virtual-workspace-url=https://localhost:%s", portStr),
-			)...,
+			framework.PrivateKcpServerSkipReadyCheck(true),
+			framework.PrivateKcpServerArgs(
+				append(framework.TestServerArgsWithTokenAuthFile(tokenAuthFile),
+					"--run-virtual-workspaces=false",
+					fmt.Sprintf("--client-ca-file=%s", clientCACertFile),
+					fmt.Sprintf("--tls-cert-file=%s", shardCertFile),
+					fmt.Sprintf("--tls-private-key-file=%s", shardKeyFile),
+					fmt.Sprintf("--shard-virtual-workspace-url=https://localhost:%s", portStr),
+					fmt.Sprintf("--shard-client-cert-file=%s", shardClientCert),
+					fmt.Sprintf("--shard-client-key-file=%s", shardClientCertKey),
+					fmt.Sprintf("--shard-virtual-workspace-ca-file=%s", servingCACertFile),
+				)...,
+			),
 		)
 
-		// write kubeconfig to disk, next to kcp kubeconfig
-		kcpAdminConfig, _ := server.RawConfig()
-		var baseCluster = *kcpAdminConfig.Clusters["base"] // shallow copy
-		baseCluster.Server = fmt.Sprintf("%s/clusters/system:admin", baseCluster.Server)
+		t.Logf("write kubeconfig to disk, next to kcp kubeconfig")
+		type portListener interface {
+			ListenPort() string
+		}
+
+		pl, ok := server.(portListener)
+		require.True(t, ok, "server is not a portListener")
+		kcpPort := pl.ListenPort()
+
 		virtualWorkspaceKubeConfig := clientcmdapi.Config{
 			Clusters: map[string]*clientcmdapi.Cluster{
-				"shard": &baseCluster,
+				"shard": {
+					Server:               "https://localhost:" + kcpPort + "/clusters/system:admin",
+					CertificateAuthority: servingCACertFile,
+				},
 			},
 			Contexts: map[string]*clientcmdapi.Context{
 				"shard": {
@@ -619,24 +691,36 @@ func testWorkspacesVirtualWorkspaces(t *testing.T, standalone bool) {
 				},
 			},
 			AuthInfos: map[string]*clientcmdapi.AuthInfo{
-				"virtualworkspace": kcpAdminConfig.AuthInfos["shard-admin"],
+				"virtualworkspace": {
+					ClientCertificate: vwClientCert,
+					ClientKey:         vwClientCertKey,
+				},
 			},
 			CurrentContext: "shard",
 		}
-		kubeconfigPath := filepath.Join(filepath.Dir(server.KubeconfigPath()), "virtualworkspace.kubeconfig")
+		kubeconfigPath := filepath.Join(certDir, "virtualworkspace.kubeconfig")
 		err = clientcmd.WriteToFile(virtualWorkspaceKubeConfig, kubeconfigPath)
 		require.NoError(t, err)
 
-		// launch virtual workspace apiserver
+		t.Logf("launch virtual workspace apiserver")
+		t.Logf("create vw serving cert")
+		vwCert, err := servingCA.MakeServerCert(hostnames, 365)
+		require.NoError(t, err, "error creating vw serving cert")
+		vwServingKeyFile := filepath.Join(certDir, "vwserver.crt")
+		vwServingCertFile := filepath.Join(certDir, "vwserver.key")
+		err = vwCert.WriteCertConfigFile(vwServingCertFile, vwServingKeyFile)
+		require.NoError(t, err, "error writing vw serving cert")
+
 		port, err := strconv.Atoi(portStr)
 		require.NoError(t, err)
 		opts := virtualoptions.NewOptions()
 		opts.KubeconfigFile = kubeconfigPath
 		opts.SecureServing.BindPort = port
-		opts.SecureServing.ServerCert.CertKey.KeyFile = filepath.Join(filepath.Dir(server.KubeconfigPath()), "apiserver.key")
-		opts.SecureServing.ServerCert.CertKey.CertFile = filepath.Join(filepath.Dir(server.KubeconfigPath()), "apiserver.crt")
+		opts.SecureServing.ServerCert.CertKey.KeyFile = vwServingKeyFile
+		opts.SecureServing.ServerCert.CertKey.CertFile = vwServingCertFile
 		opts.Authentication.SkipInClusterLookup = true
 		opts.Authentication.RemoteKubeConfigFile = kubeconfigPath
+		opts.Authentication.ClientCert.ClientCA = clientCACertFile
 		err = opts.Validate()
 		require.NoError(t, err)
 		ctx, cancelFunc := context.WithCancel(context.Background())
@@ -646,11 +730,22 @@ func testWorkspacesVirtualWorkspaces(t *testing.T, standalone bool) {
 			require.NoError(t, err)
 		}()
 
-		// wait for readiness
-		client := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
-		baseClusterServerURL, err := url.Parse(baseCluster.Server)
-		require.NoError(t, err)
-		virtualWorkspaceServerHost = fmt.Sprintf("https://%s:%s", baseClusterServerURL.Hostname(), portStr)
+		err = server.Ready(true)
+		require.NoError(t, err, "kcp server not ready")
+
+		t.Logf("wait for readiness")
+		caCert, err := ioutil.ReadFile(servingCACertFile)
+		require.NoError(t, err, "error reading serving ca cert")
+		cas := x509.NewCertPool()
+		cas.AppendCertsFromPEM(caCert)
+		client := &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					RootCAs: cas,
+				},
+			},
+		}
+		virtualWorkspaceServerHost = fmt.Sprintf("https://localhost:%s", portStr)
 
 		require.Eventually(t, func() bool {
 			resp, err := client.Get(fmt.Sprintf("%s/readyz", virtualWorkspaceServerHost))

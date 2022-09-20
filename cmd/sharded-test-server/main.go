@@ -96,7 +96,7 @@ func start(proxyFlags, shardFlags []string, logDirPath, workDirPath string, numb
 	// create server CA to be used to sign shard serving certs
 	servingCA, err := crypto.MakeSelfSignedCA(".kcp/serving-ca.crt", ".kcp/serving-ca.key", ".kcp/serving-ca-serial.txt", "kcp-serving-ca", 365)
 	if err != nil {
-		fmt.Printf("failed to create requestheader-ca: %v\n", err)
+		fmt.Printf("failed to create serving-ca: %v\n", err)
 		os.Exit(1)
 	}
 

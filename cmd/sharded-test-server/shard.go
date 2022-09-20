@@ -56,7 +56,7 @@ func newShard(ctx context.Context, n int, args []string, servingCA *crypto.CA, h
 	shardUser := &user.DefaultInfo{Name: fmt.Sprintf("kcp-shard-%d", n), Groups: []string{"system:masters"}}
 	_, err = clientCA.MakeClientCertificate(shardClientCert, shardClientCertKey, shardUser, 365)
 	if err != nil {
-		fmt.Printf("failed to create requestheader client cert: %v\n", err)
+		fmt.Printf("failed to create shard client cert: %v\n", err)
 		os.Exit(1)
 	}
 
