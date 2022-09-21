@@ -128,6 +128,9 @@ func startVirtual(ctx context.Context, index int, servingCA *crypto.CA, hostIP s
 		fmt.Sprintf("--tls-private-key-file=%s", servingKeyFile),
 		fmt.Sprintf("--tls-cert-file=%s", servingCertFile),
 		fmt.Sprintf("--secure-port=%d", 7444+index),
+		"--requestheader-username-headers=X-Remote-User",
+		"--requestheader-group-headers=X-Remote-Group",
+		fmt.Sprintf("--requestheader-client-ca-file=%s", filepath.Join(workDirPath, ".kcp/requestheader-ca.crt")),
 		"--v=4",
 	)
 	fmt.Fprintf(out, "running: %v\n", strings.Join(commandLine, " "))
