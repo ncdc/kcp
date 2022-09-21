@@ -106,9 +106,11 @@ func WithAuditAnnotation(handler http.Handler) http.HandlerFunc {
 	})
 }
 
-// WithVirtualWorkspacesRedirectOrProxy translates any loopback client requests to virtual workspaces to either a
-// redirect (virtual workspaces server is in-process) or a proxy (virtual workspaces server is external).
-func WithVirtualWorkspacesRedirectOrProxy(apiHandler http.Handler, shardVirtualWorkspaceURL *url.URL, transport http.RoundTripper) http.HandlerFunc {
+// WithVirtualWorkspacesProxy proxies internal requests to virtual workspaces (i.e., requests that did
+// not go through the front proxy) to the external virtual workspaces server. Proxying is required to avoid
+// certificate verification errors because these requests typically come from the kcp loopback client, and it is
+// impossible to use that client against any server other than kcp.
+func WithVirtualWorkspacesProxy(apiHandler http.Handler, shardVirtualWorkspaceURL *url.URL, transport http.RoundTripper) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		logger := klog.FromContext(req.Context())
 
@@ -118,9 +120,9 @@ func WithVirtualWorkspacesRedirectOrProxy(apiHandler http.Handler, shardVirtualW
 		}
 
 		if shardVirtualWorkspaceURL == nil || transport == nil {
-			logger.V(4).Info("issuing virtual workspaces redirect", "redirect", req.URL.String())
-			http.Redirect(w, req, req.URL.String(), http.StatusTemporaryRedirect)
-			return
+			// This handler func is only installed when these are both set. If this happens, it means we've regressed
+			// in the installation of this handler func, and a panic is appropriate.
+			panic("both shardVirtualWorkspaceURL and transport are required")
 		}
 
 		user, ok := request.UserFrom(req.Context())

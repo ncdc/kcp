@@ -362,10 +362,12 @@ func NewConfig(opts *kcpserveroptions.CompletedOptions) (*Config, error) {
 			)
 		}
 
-		// Note: this has to come after DefaultBuildHandlerChainBeforeAuthz because it needs to come after
-		// authentication has been processed
-		apiHandler = WithVirtualWorkspacesRedirectOrProxy(apiHandler, shardVirtualWorkspaceURL, virtualWorkspaceServerProxyTransport)
-		apiHandler = WithWorkspaceProjection(apiHandler)
+		// Only include this when the virtual workspace server is external
+		if shardVirtualWorkspaceURL != nil && virtualWorkspaceServerProxyTransport != nil {
+			// Note: this has to come after DefaultBuildHandlerChainBeforeAuthz because it needs the user info, which
+			// is only available after DefaultBuildHandlerChainBeforeAuthz.
+			apiHandler = WithVirtualWorkspacesProxy(apiHandler, shardVirtualWorkspaceURL, virtualWorkspaceServerProxyTransport)
+		}
 
 		apiHandler = genericapiserver.DefaultBuildHandlerChainBeforeAuthz(apiHandler, genericConfig)
 
@@ -373,7 +375,9 @@ func NewConfig(opts *kcpserveroptions.CompletedOptions) (*Config, error) {
 		// But this is not harmful as the kcp warnings are not many.
 		apiHandler = filters.WithWarningRecorder(apiHandler)
 
-		// add a mux before the chain, for other handlers with their own handler chain to hook in
+		// Add a mux before the chain, for other handlers with their own handler chain to hook in. For example, when
+		// the virtual workspace server is running as part of kcp, it registers /services with the mux so it can handle
+		// that path itself, instead of the rest of the handler chain above handling it.
 		mux := http.NewServeMux()
 		mux.Handle("/", apiHandler)
 		*c.preHandlerChainMux = append(*c.preHandlerChainMux, mux)
@@ -383,6 +387,7 @@ func NewConfig(opts *kcpserveroptions.CompletedOptions) (*Config, error) {
 			apiHandler = tunneler.WithSyncerTunnel(apiHandler)
 		}
 
+		apiHandler = WithWorkspaceProjection(apiHandler)
 		apiHandler = kcpfilters.WithAuditEventClusterAnnotation(apiHandler)
 		apiHandler = WithAuditAnnotation(apiHandler) // Must run before any audit annotation is made
 		apiHandler = kcpfilters.WithClusterScope(apiHandler)
