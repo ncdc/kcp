@@ -730,10 +730,12 @@ func testWorkspacesVirtualWorkspaces(t *testing.T, standalone bool) {
 			require.NoError(t, err)
 		}()
 
+		t.Logf("wait for kcp server readiness")
 		err = server.Ready(true)
 		require.NoError(t, err, "kcp server not ready")
+		t.Logf("kcp server is ready")
 
-		t.Logf("wait for readiness")
+		t.Logf("read serving ca")
 		caCert, err := ioutil.ReadFile(servingCACertFile)
 		require.NoError(t, err, "error reading serving ca cert")
 		cas := x509.NewCertPool()
@@ -747,19 +749,18 @@ func testWorkspacesVirtualWorkspaces(t *testing.T, standalone bool) {
 		}
 		virtualWorkspaceServerHost = fmt.Sprintf("https://localhost:%s", portStr)
 
-		require.Eventually(t, func() bool {
+		t.Logf("wait for vw server readiness")
+		framework.Eventually(t, func() (bool, string) {
 			resp, err := client.Get(fmt.Sprintf("%s/readyz", virtualWorkspaceServerHost))
 			if err != nil {
-				klog.Warningf("error checking virtual workspace readiness: %v", err)
-				return false
+				return false, err.Error()
 			}
-			defer resp.Body.Close()
+			resp.Body.Close()
 			if resp.StatusCode == http.StatusOK {
-				return true
+				return true, ""
 			}
-			klog.Infof("virtual workspace is not ready yet, status code: %d", resp.StatusCode)
-			return false
-		}, wait.ForeverTestTimeout, time.Millisecond*100, "virtual workspace apiserver not ready")
+			return false, fmt.Sprintf("virtual workspace is not ready yet, status code: %d", resp.StatusCode)
+		}, wait.ForeverTestTimeout, time.Millisecond*100, "vw server not ready")
 	} else {
 		server = framework.SharedKcpServer(t)
 		virtualWorkspaceServerHost = server.BaseConfig(t).Host
