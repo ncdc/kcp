@@ -121,6 +121,7 @@ func (b *APIBinder) reconcile(ctx context.Context, clusterWorkspace *tenancyv1al
 	}
 
 	requiredExportRefs := map[tenancyv1alpha1.APIExportReference]struct{}{}
+	someExportsMissing := false
 
 	for _, cwt := range cwts {
 		logger := logging.WithObject(logger, cwt)
@@ -134,13 +135,6 @@ func (b *APIBinder) reconcile(ctx context.Context, clusterWorkspace *tenancyv1al
 
 			logger := logger.WithValues("apiExport.path", exportRef.Path, "apiExport.name", exportRef.Name)
 			ctx := klog.NewContext(ctx, logger)
-
-			// Make sure the APIExport exists
-			apiExport, err := b.getAPIExport(logicalcluster.New(exportRef.Path), exportRef.Name)
-			if err != nil {
-				errors = append(errors, err)
-				continue
-			}
 
 			apiBindingName := generateAPIBindingName(clusterName, exportRef.Path, exportRef.Name)
 			logger = logger.WithValues("apiBindingName", apiBindingName)
@@ -162,6 +156,15 @@ func (b *APIBinder) reconcile(ctx context.Context, clusterWorkspace *tenancyv1al
 						},
 					},
 				},
+			}
+
+			apiExport, err := b.getAPIExport(logicalcluster.New(exportRef.Path), exportRef.Name)
+			if err != nil {
+				if !someExportsMissing {
+					errors = append(errors, fmt.Errorf("unable to complete initialization: unable to find at least 1 APIExport"))
+				}
+				someExportsMissing = true
+				continue
 			}
 
 			for i := range apiExport.Spec.PermissionClaims {
@@ -203,6 +206,12 @@ func (b *APIBinder) reconcile(ctx context.Context, clusterWorkspace *tenancyv1al
 			"encountered errors: %v",
 			utilerrors.NewAggregate(errors),
 		)
+
+		if someExportsMissing {
+			// Retry if any APIExports are missing, as it's possible they'll show up (cache server slow to catch up,
+			// arrive via replication)
+			return utilerrors.NewAggregate(errors)
+		}
 
 		return nil
 	}
