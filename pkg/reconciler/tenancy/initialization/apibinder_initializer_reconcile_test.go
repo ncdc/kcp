@@ -82,3 +82,7 @@ func TestGenerateAPIBindingNameWithMultipleSimilarLongNames(t *testing.T) {
 	require.Len(t, generated2, 253)
 	require.NotEqual(t, generated1, generated2, "expected different generated names")
 }
+
+func TestReconcile(t *testing.T) {
+
+}

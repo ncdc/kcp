@@ -85,6 +85,10 @@ func Run(ctx context.Context, o *options.Options) error {
 	if err != nil {
 		return err
 	}
+
+	// Don't throttle
+	nonIdentityConfig.QPS = -1
+
 	u, err := url.Parse(nonIdentityConfig.Host)
 	if err != nil {
 		return err
