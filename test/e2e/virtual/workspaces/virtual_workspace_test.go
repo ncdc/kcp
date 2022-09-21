@@ -35,15 +35,6 @@ import (
 	"github.com/kcp-dev/logicalcluster/v2"
 	"github.com/stretchr/testify/require"
 
-	"github.com/kcp-dev/kcp/cmd/sharded-test-server/third_party/library-go/crypto"
-	virtualcommand "github.com/kcp-dev/kcp/cmd/virtual-workspaces/command"
-	virtualoptions "github.com/kcp-dev/kcp/cmd/virtual-workspaces/options"
-	tenancyv1alpha1 "github.com/kcp-dev/kcp/pkg/apis/tenancy/v1alpha1"
-	tenancyv1beta1 "github.com/kcp-dev/kcp/pkg/apis/tenancy/v1beta1"
-	"github.com/kcp-dev/kcp/pkg/apis/third_party/conditions/util/conditions"
-	kcpclientset "github.com/kcp-dev/kcp/pkg/client/clientset/versioned"
-	"github.com/kcp-dev/kcp/pkg/softimpersonation"
-	"github.com/kcp-dev/kcp/test/e2e/framework"
 	rbacv1 "k8s.io/api/rbac/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -56,6 +47,16 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/kcp-dev/kcp/cmd/sharded-test-server/third_party/library-go/crypto"
+	virtualcommand "github.com/kcp-dev/kcp/cmd/virtual-workspaces/command"
+	virtualoptions "github.com/kcp-dev/kcp/cmd/virtual-workspaces/options"
+	tenancyv1alpha1 "github.com/kcp-dev/kcp/pkg/apis/tenancy/v1alpha1"
+	tenancyv1beta1 "github.com/kcp-dev/kcp/pkg/apis/tenancy/v1beta1"
+	"github.com/kcp-dev/kcp/pkg/apis/third_party/conditions/util/conditions"
+	kcpclientset "github.com/kcp-dev/kcp/pkg/client/clientset/versioned"
+	"github.com/kcp-dev/kcp/pkg/softimpersonation"
+	"github.com/kcp-dev/kcp/test/e2e/framework"
 )
 
 type testDataType struct {
