@@ -43,7 +43,7 @@ import (
 	kcpclient "github.com/kcp-dev/kcp/pkg/client/clientset/versioned"
 	kcpinformers "github.com/kcp-dev/kcp/pkg/client/informers/externalversions"
 	kcpfeatures "github.com/kcp-dev/kcp/pkg/features"
-	bootstrap "github.com/kcp-dev/kcp/pkg/server/bootstrap"
+	"github.com/kcp-dev/kcp/pkg/server/bootstrap"
 	virtualrootapiserver "github.com/kcp-dev/kcp/pkg/virtual/framework/rootapiserver"
 )
 
@@ -92,8 +92,13 @@ func Run(ctx context.Context, o *options.Options) error {
 	u.Path = ""
 	nonIdentityConfig.Host = u.String()
 
+	localShardKubeClusterClient, err := kubernetesclient.NewClusterForConfig(nonIdentityConfig)
+	if err != nil {
+		return err
+	}
+
 	// resolve identities for system APIBindings
-	identityConfig, resolveIdentities := bootstrap.NewConfigWithWildcardIdentities(nonIdentityConfig, bootstrap.KcpRootGroupExportNames, bootstrap.KcpRootGroupResourceExportNames, nil)
+	identityConfig, resolveIdentities := bootstrap.NewConfigWithWildcardIdentities(nonIdentityConfig, bootstrap.KcpRootGroupExportNames, bootstrap.KcpRootGroupResourceExportNames, localShardKubeClusterClient)
 	if err := wait.PollImmediateInfiniteWithContext(ctx, time.Millisecond*500, func(ctx context.Context) (bool, error) {
 		if err := resolveIdentities(ctx); err != nil {
 			klog.V(3).Infof("failed to resolve identities, keeping trying: %v", err)
