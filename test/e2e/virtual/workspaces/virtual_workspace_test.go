@@ -35,6 +35,15 @@ import (
 	"github.com/kcp-dev/logicalcluster/v2"
 	"github.com/stretchr/testify/require"
 
+	"github.com/kcp-dev/kcp/cmd/sharded-test-server/third_party/library-go/crypto"
+	virtualcommand "github.com/kcp-dev/kcp/cmd/virtual-workspaces/command"
+	virtualoptions "github.com/kcp-dev/kcp/cmd/virtual-workspaces/options"
+	tenancyv1alpha1 "github.com/kcp-dev/kcp/pkg/apis/tenancy/v1alpha1"
+	tenancyv1beta1 "github.com/kcp-dev/kcp/pkg/apis/tenancy/v1beta1"
+	"github.com/kcp-dev/kcp/pkg/apis/third_party/conditions/util/conditions"
+	kcpclientset "github.com/kcp-dev/kcp/pkg/client/clientset/versioned"
+	"github.com/kcp-dev/kcp/pkg/softimpersonation"
+	"github.com/kcp-dev/kcp/test/e2e/framework"
 	rbacv1 "k8s.io/api/rbac/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -47,17 +56,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-	"k8s.io/klog/v2"
-
-	"github.com/kcp-dev/kcp/cmd/sharded-test-server/third_party/library-go/crypto"
-	virtualcommand "github.com/kcp-dev/kcp/cmd/virtual-workspaces/command"
-	virtualoptions "github.com/kcp-dev/kcp/cmd/virtual-workspaces/options"
-	tenancyv1alpha1 "github.com/kcp-dev/kcp/pkg/apis/tenancy/v1alpha1"
-	tenancyv1beta1 "github.com/kcp-dev/kcp/pkg/apis/tenancy/v1beta1"
-	"github.com/kcp-dev/kcp/pkg/apis/third_party/conditions/util/conditions"
-	kcpclientset "github.com/kcp-dev/kcp/pkg/client/clientset/versioned"
-	"github.com/kcp-dev/kcp/pkg/softimpersonation"
-	"github.com/kcp-dev/kcp/test/e2e/framework"
 )
 
 type testDataType struct {
@@ -209,15 +207,11 @@ var testCases = []struct {
 
 			t.Logf("Create Workspace workspace1 in the virtual workspace")
 			var workspace1 *tenancyv1beta1.Workspace
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				// RBAC authz uses informers and needs a moment to understand the new roles. Hence, try until successful.
 				var err error
 				workspace1, err = vwUser1Client.Cluster(server.orgClusterName).TenancyV1beta1().Workspaces().Create(ctx, testData.workspace1.DeepCopy(), metav1.CreateOptions{})
-				if err != nil {
-					klog.Errorf("Failed to create workspace1: %v", err)
-					return false
-				}
-				return true
+				return err == nil, fmt.Sprintf("%v", err)
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to create workspace1")
 
 			t.Logf("Verify that the Workspace results in a ClusterWorkspace of the same name in the org workspace")
@@ -228,21 +222,21 @@ var testCases = []struct {
 			})
 
 			t.Logf("Workspace will show up in list of user1")
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				list, err := vwUser1Client.Cluster(server.orgClusterName).TenancyV1beta1().Workspaces().List(ctx, metav1.ListOptions{})
 				if err != nil {
-					t.Logf("failed to get workspaces: %v", err)
+					return false, fmt.Sprintf("failed to get workspaces: %v", err)
 				}
-				return len(list.Items) == 1 && list.Items[0].Name == workspace1.Name
+				return len(list.Items) == 1 && list.Items[0].Name == workspace1.Name, ""
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to list workspace1")
 
 			t.Logf("Workspace will show up in list of user2")
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				list, err := vwUser2Client.Cluster(server.orgClusterName).TenancyV1beta1().Workspaces().List(ctx, metav1.ListOptions{})
 				if err != nil {
-					t.Logf("failed to get workspaces: %v", err)
+					return false, fmt.Sprintf("failed to get workspaces: %v", err)
 				}
-				return len(list.Items) == 1 && list.Items[0].Name == workspace1.Name
+				return len(list.Items) == 1 && list.Items[0].Name == workspace1.Name, ""
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to list workspace1")
 
 			t.Logf("Workspace will also show up when user1 submits a list to KCP itself (through projection)")
@@ -282,27 +276,23 @@ var testCases = []struct {
 
 			t.Logf("Create Workspace workspace1 in the virtual workspace")
 			var workspace1 *tenancyv1beta1.Workspace
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				// RBAC authz uses informers and needs a moment to understand the new roles. Hence, try until successful.
 				var err error
 				workspace1, err = vwUser1Client.Cluster(server.orgClusterName).TenancyV1beta1().Workspaces().Create(ctx, testData.workspace1.DeepCopy(), metav1.CreateOptions{})
-				if err != nil {
-					klog.Errorf("Failed to create workspace1: %v", err)
-					return false
-				}
-				return true
+				return err == nil, fmt.Sprintf("%v", err)
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to create workspace1")
 
 			t.Logf("Wait until informer based virtual workspace sees the new workspace")
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				_, err := vwUser1Client.Cluster(server.orgClusterName).TenancyV1beta1().Workspaces().Get(ctx, workspace1.Name, metav1.GetOptions{})
-				return err == nil
+				return err == nil, fmt.Sprintf("%v", err)
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to get workspace1")
 
 			var err error
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				_, err = vwUser1Client.Cluster(server.orgClusterName.Join(workspace1.Name)).TenancyV1beta1().Workspaces().List(ctx, metav1.ListOptions{})
-				return err == nil
+				return err == nil, fmt.Sprintf("%v", err)
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to list workspaces in the universal cluster")
 			require.NoError(t, err, "failed to list workspaces in the universal cluster")
 		},
@@ -355,7 +345,7 @@ var testCases = []struct {
 
 			t.Logf("Create Workspace workspace1 in the virtual workspace as user1")
 			var workspace1 *tenancyv1beta1.Workspace
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				// RBAC authz uses informers and needs a moment to understand the new roles. Hence, try until successful.
 				var err error
 				workspace1, err = vwUser1Client.Cluster(parentCluster).TenancyV1beta1().Workspaces().Create(ctx, &tenancyv1beta1.Workspace{
@@ -367,10 +357,7 @@ var testCases = []struct {
 						},
 					},
 				}, metav1.CreateOptions{})
-				if err != nil {
-					t.Logf("error creating workspace: %v", err)
-				}
-				return err == nil
+				return err == nil, fmt.Sprintf("%v", err)
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to create workspace1 as user1")
 
 			t.Logf("Verify that the Workspace results in a ClusterWorkspace of the same name in the org workspace")
@@ -455,7 +442,7 @@ var testCases = []struct {
 
 			t.Logf("Create Workspace workspace1 in the virtual workspace as user1")
 			var workspace1 *tenancyv1beta1.Workspace
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				// RBAC authz uses informers and needs a moment to understand the new roles. Hence, try until successful.
 				var err error
 				workspace1, err = vwUser1Client.Cluster(parentCluster).TenancyV1beta1().Workspaces().Create(ctx, &tenancyv1beta1.Workspace{
@@ -467,10 +454,7 @@ var testCases = []struct {
 						},
 					},
 				}, metav1.CreateOptions{})
-				if err != nil {
-					t.Logf("error creating workspace: %v", err)
-				}
-				return err == nil
+				return err == nil, fmt.Sprintf("%v", err)
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to create workspace1 as user1")
 
 			t.Logf("Verify that the Workspace results in a ClusterWorkspace of the same name in the org workspace")
@@ -483,14 +467,11 @@ var testCases = []struct {
 			// Check that user1 can list and watch workspaces inside the parent workspace (part of system:kcp:tenancy:reader role every user with access has)
 			t.Logf("Verify that user1 can list and watch workspaces inside the parent workspace, and get the workspace1")
 			var listedWorkspaces *tenancyv1beta1.WorkspaceList
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				// RBAC authz uses informers and needs a moment to understand the new roles. Hence, try until successful.
 				var err error
 				listedWorkspaces, err = vwUser1Client.Cluster(parentCluster).TenancyV1beta1().Workspaces().List(ctx, metav1.ListOptions{})
-				if err != nil {
-					t.Logf("error listing workspaces: %v", err)
-				}
-				return err == nil && len(listedWorkspaces.Items) == 1
+				return err == nil && len(listedWorkspaces.Items) == 1, fmt.Sprintf("%v", err)
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to list workspaces inside the parent as user1")
 			require.NotNil(t, listedWorkspaces, "user1 should have a non-nil result when listing in the parent workspace")
 			require.Len(t, listedWorkspaces.Items, 1, "user1 should get workspace1 when listing in the parent workspace")
@@ -510,13 +491,10 @@ var testCases = []struct {
 			require.True(t, kerrors.IsForbidden(err), "expected to get a forbidden error") // not a not found error
 
 			// Check that user2 can get the `workspace1` workspace inside the parent workspace
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				// RBAC authz uses informers and needs a moment to understand the new roles. Hence, try until successful.
 				_, err = vwUser2Client.Cluster(parentCluster).TenancyV1beta1().Workspaces().Get(ctx, testData.workspace1.Name, metav1.GetOptions{})
-				if err != nil {
-					t.Logf("error getting workspace: %v", err)
-				}
-				return err == nil
+				return err == nil, fmt.Sprintf("%v", err)
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to get workspace 'workspace1' inside the parent as user2")
 			require.Nil(t, err, "user2 should be allowed to get workspace 'workspace1' inside the parent workspace")
 
@@ -545,14 +523,11 @@ var testCases = []struct {
 
 			t.Logf("Create workspace1 in org1")
 			var workspace1 *tenancyv1beta1.Workspace
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				// RBAC authz uses informers and needs a moment to understand the new roles. Hence, try until successful.
 				var err error
 				workspace1, err = org1Client.TenancyV1beta1().Workspaces().Create(ctx, testData.workspace1.DeepCopy(), metav1.CreateOptions{})
-				if err != nil {
-					t.Logf("failed to create workspace1 in org1: %v", err)
-				}
-				return err == nil
+				return err == nil, fmt.Sprintf("%v", err)
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to create workspace1")
 
 			t.Logf("Verify that the Workspace results in a ClusterWorkspace of the same name in the org workspace")
@@ -564,31 +539,27 @@ var testCases = []struct {
 
 			t.Logf("Create workspace2 in org2")
 			var workspace2 *tenancyv1beta1.Workspace
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				// RBAC authz uses informers and needs a moment to understand the new roles. Hence, try until successful.
 				var err error
 				workspace2, err = org2Client.TenancyV1beta1().Workspaces().Create(ctx, testData.workspace2.DeepCopy(), metav1.CreateOptions{})
-				if err != nil {
-					t.Logf("failed to create workspace2 in org2: %v", err)
-				}
-				return err == nil
+				return err == nil, fmt.Sprintf("%v", err)
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to create workspace2")
 
 			t.Logf("Workspace2 will show up via get")
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				// RBAC authz uses informers and needs a moment to understand the new roles. Hence, try until successful.
 				_, err := org2Client.TenancyV1beta1().Workspaces().Get(ctx, workspace2.Name, metav1.GetOptions{})
-				return err == nil
+				return err == nil, fmt.Sprintf("%v", err)
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to see workspace1 in org1 via get")
 
 			t.Logf("Workspace2 will show up via list in org1, workspace1 won't")
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				list, err := org2Client.TenancyV1beta1().Workspaces().List(ctx, metav1.ListOptions{})
 				if err != nil {
-					t.Logf("failed to create workspace2 in org2: %v", err)
-					return false
+					return false, err.Error()
 				}
-				return len(list.Items) == 1 && list.Items[0].Name == workspace2.Name
+				return len(list.Items) == 1 && list.Items[0].Name == workspace2.Name, ""
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to see workspace1 in org1 via list")
 		},
 	},
@@ -755,7 +726,10 @@ func testWorkspacesVirtualWorkspaces(t *testing.T, standalone bool) {
 			if err != nil {
 				return false, err.Error()
 			}
-			resp.Body.Close()
+
+			err = resp.Body.Close()
+			require.NoError(t, err)
+
 			if resp.StatusCode == http.StatusOK {
 				return true, ""
 			}
