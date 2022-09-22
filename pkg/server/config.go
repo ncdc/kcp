@@ -50,13 +50,14 @@ import (
 	kcpadmissioninitializers "github.com/kcp-dev/kcp/pkg/admission/initializers"
 	apisv1alpha1 "github.com/kcp-dev/kcp/pkg/apis/apis/v1alpha1"
 	"github.com/kcp-dev/kcp/pkg/authorization"
+	bootstrappolicy "github.com/kcp-dev/kcp/pkg/authorization/bootstrap"
 	kcpclient "github.com/kcp-dev/kcp/pkg/client/clientset/versioned"
 	kcpinformers "github.com/kcp-dev/kcp/pkg/client/informers/externalversions"
 	"github.com/kcp-dev/kcp/pkg/embeddedetcd"
 	kcpfeatures "github.com/kcp-dev/kcp/pkg/features"
 	"github.com/kcp-dev/kcp/pkg/indexers"
 	"github.com/kcp-dev/kcp/pkg/informer"
-	bootstrap "github.com/kcp-dev/kcp/pkg/server/bootstrap"
+	"github.com/kcp-dev/kcp/pkg/server/bootstrap"
 	kcpfilters "github.com/kcp-dev/kcp/pkg/server/filters"
 	kcpserveroptions "github.com/kcp-dev/kcp/pkg/server/options"
 	"github.com/kcp-dev/kcp/pkg/server/options/batteries"
@@ -89,12 +90,15 @@ type ExtraConfig struct {
 	shardAdminTokenHash                       []byte
 
 	// clients
-	DynamicClusterClient       dynamic.ClusterInterface
-	KubeClusterClient          kubernetesclient.ClusterInterface
-	DeepSARClient              kubernetesclient.ClusterInterface
-	ApiExtensionsClusterClient apiextensionsclient.ClusterInterface
-	KcpClusterClient           kcpclient.ClusterInterface
-	RootShardKcpClusterClient  kcpclient.ClusterInterface
+	DynamicClusterClient                dynamic.ClusterInterface
+	KubeClusterClient                   kubernetesclient.ClusterInterface
+	DeepSARClient                       kubernetesclient.ClusterInterface
+	ApiExtensionsClusterClient          apiextensionsclient.ClusterInterface
+	KcpClusterClient                    kcpclient.ClusterInterface
+	RootShardKcpClusterClient           kcpclient.ClusterInterface
+	BootstrapDynamicClusterClient       dynamic.ClusterInterface
+	BootstrapApiExtensionsClusterClient apiextensionsclient.ClusterInterface
+	BootstrapKcpClusterClient           kcpclient.ClusterInterface
 
 	// misc
 	preHandlerChainMux   *handlerChainMuxes
@@ -268,6 +272,30 @@ func NewConfig(opts *kcpserveroptions.CompletedOptions) (*Config, error) {
 		c.userToken = userToken
 	}
 
+	bootstrapKcpConfig := rest.CopyConfig(c.identityConfig)
+	bootstrapKcpConfig.Impersonate.UserName = "system:kcp:bootstrapper"
+	bootstrapKcpConfig.Impersonate.Groups = []string{bootstrappolicy.SystemKcpWorkspaceBootstrapper}
+	bootstrapKcpConfig = rest.AddUserAgent(bootstrapKcpConfig, "kcp-identity-bootstrapper")
+	c.BootstrapKcpClusterClient, err = kcpclient.NewClusterForConfig(bootstrapKcpConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	bootstrapConfig := rest.CopyConfig(c.GenericConfig.LoopbackClientConfig)
+	bootstrapConfig.Impersonate.UserName = "system:kcp:bootstrapper"
+	bootstrapConfig.Impersonate.Groups = []string{bootstrappolicy.SystemKcpWorkspaceBootstrapper}
+	bootstrapConfig = rest.AddUserAgent(bootstrapConfig, "kcp-bootstrapper")
+
+	c.BootstrapApiExtensionsClusterClient, err = apiextensionsclient.NewClusterForConfig(bootstrapConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	c.BootstrapDynamicClusterClient, err = dynamic.NewClusterForConfig(bootstrapConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	if err := opts.GenericControlPlane.Audit.ApplyTo(c.GenericConfig); err != nil {
 		return nil, err
 	}
@@ -297,6 +325,7 @@ func NewConfig(opts *kcpserveroptions.CompletedOptions) (*Config, error) {
 				genericConfig.Authorization.Authorizer,
 				c.KubeClusterClient,
 				c.KcpClusterClient,
+				c.BootstrapKcpClusterClient,
 				c.KubeSharedInformerFactory,
 				c.KcpSharedInformerFactory,
 				c.GenericConfig.ExternalAddress,
@@ -313,7 +342,9 @@ func NewConfig(opts *kcpserveroptions.CompletedOptions) (*Config, error) {
 		// But this is not harmful as the kcp warnings are not many.
 		apiHandler = filters.WithWarningRecorder(apiHandler)
 
-		// add a mux before the chain, for other handlers with their own handler chain to hook in
+		// Add a mux before the chain, for other handlers with their own handler chain to hook in. For example, when
+		// the virtual workspace server is running as part of kcp, it registers /services with the mux so it can handle
+		// that path itself, instead of the rest of the handler chain above handling it.
 		mux := http.NewServeMux()
 		mux.Handle("/", apiHandler)
 		*c.preHandlerChainMux = append(*c.preHandlerChainMux, mux)
@@ -322,7 +353,8 @@ func NewConfig(opts *kcpserveroptions.CompletedOptions) (*Config, error) {
 		if kcpfeatures.DefaultFeatureGate.Enabled(kcpfeatures.SyncerTunnel) {
 			apiHandler = tunneler.WithSyncerTunnel(apiHandler)
 		}
-		apiHandler = WithWorkspaceProjection(apiHandler, shardVirtualWorkspaceURL)
+
+		apiHandler = WithWorkspaceProjection(apiHandler)
 		apiHandler = kcpfilters.WithAuditEventClusterAnnotation(apiHandler)
 		apiHandler = WithAuditAnnotation(apiHandler) // Must run before any audit annotation is made
 		apiHandler = kcpfilters.WithClusterScope(apiHandler)

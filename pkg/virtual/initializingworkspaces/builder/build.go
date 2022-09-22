@@ -224,7 +224,7 @@ func BuildVirtualWorkspace(
 				parent, name := cluster.Split()
 				clusterWorkspace, err := lister.Get(clusters.ToClusterAwareKey(parent, name))
 				if err != nil {
-					http.Error(writer, fmt.Sprintf("could not find cluster %q: %v", parent, err), http.StatusInternalServerError)
+					http.Error(writer, fmt.Sprintf("error getting clusterworkspace %s|%s: %v", parent, name, err), http.StatusInternalServerError)
 					return
 				}
 

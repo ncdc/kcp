@@ -294,11 +294,9 @@ func TestAdmit(t *testing.T) {
 				Handler:         admission.NewHandler(admission.Create, admission.Update),
 				typeLister:      typeLister,
 				workspaceLister: fakeClusterWorkspaceLister(tt.workspaces),
-				transitiveTypeResolver: TransitiveTypeResolver{
-					Getter: func(cluster logicalcluster.Name, name string) (*tenancyv1alpha1.ClusterWorkspaceType, error) {
-						return typeLister.Get(clusters.ToClusterAwareKey(cluster, name))
-					},
-				},
+				transitiveTypeResolver: NewTransitiveTypeResolver(func(cluster logicalcluster.Name, name string) (*tenancyv1alpha1.ClusterWorkspaceType, error) {
+					return typeLister.Get(clusters.ToClusterAwareKey(cluster, name))
+				}),
 			}
 			ctx := request.WithCluster(context.Background(), request.Cluster{Name: tt.clusterName})
 			if err := o.Admit(ctx, tt.a, nil); (err != nil) != tt.wantErr {
@@ -590,11 +588,9 @@ func TestValidate(t *testing.T) {
 						tt.authzError,
 					}, nil
 				},
-				transitiveTypeResolver: TransitiveTypeResolver{
-					Getter: func(cluster logicalcluster.Name, name string) (*tenancyv1alpha1.ClusterWorkspaceType, error) {
-						return typeLister.Get(clusters.ToClusterAwareKey(cluster, name))
-					},
-				},
+				transitiveTypeResolver: NewTransitiveTypeResolver(func(cluster logicalcluster.Name, name string) (*tenancyv1alpha1.ClusterWorkspaceType, error) {
+					return typeLister.Get(clusters.ToClusterAwareKey(cluster, name))
+				}),
 			}
 			ctx := request.WithCluster(context.Background(), request.Cluster{Name: tt.path})
 			if err := o.Validate(ctx, tt.attr, nil); (err != nil) != tt.wantErr {
@@ -734,8 +730,8 @@ func TestTransitiveTypeResolverResolve(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &TransitiveTypeResolver{
-				Getter: func(cluster logicalcluster.Name, name string) (*tenancyv1alpha1.ClusterWorkspaceType, error) {
+			r := &transitiveTypeResolver{
+				getter: func(cluster logicalcluster.Name, name string) (*tenancyv1alpha1.ClusterWorkspaceType, error) {
 					if t, found := tt.types[cluster.Join(name).String()]; found {
 						return t, nil
 					}
@@ -958,8 +954,8 @@ func (b builder) withAdditionalLabel(labels map[string]string) builder {
 func (b builder) withAPIBindings() builder {
 	b.ClusterWorkspaceType.Spec.DefaultAPIBindings = []tenancyv1alpha1.APIExportReference{
 		{
-			WorkspacePath: "root",
-			Name:          "bar",
+			Path: "root",
+			Name: "bar",
 		},
 	}
 	return b

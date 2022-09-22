@@ -2,7 +2,7 @@ apiVersion: apis.kcp.dev/v1alpha1
 kind: APIResourceSchema
 metadata:
   creationTimestamp: null
-  name: v220912-84445eab.clusterworkspacetypes.tenancy.kcp.dev
+  name: v220915-b4cf5d4e.clusterworkspacetypes.tenancy.kcp.dev
 spec:
   group: tenancy.kcp.dev
   names:
@@ -60,13 +60,13 @@ spec:
                   name:
                     description: name is the name of the APIExport.
                     type: string
-                  workspacePath:
-                    description: workspacePath is the fully-qualified path to the
-                      workspace containing the APIExport.
+                  path:
+                    description: path is the fully-qualified path to the workspace
+                      containing the APIExport.
                     type: string
                 required:
                 - name
-                - workspacePath
+                - path
                 type: object
               type: array
             defaultChildWorkspaceType:

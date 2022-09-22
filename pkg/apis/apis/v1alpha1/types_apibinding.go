@@ -26,10 +26,6 @@ const (
 	// InternalAPIBindingExportLabelKey is the label key on an APIBinding with the
 	// base62(sha224(<clusterName>:<exportName>)) as value to filter bindings by export.
 	InternalAPIBindingExportLabelKey = "internal.apis.kcp.dev/export"
-
-	// InternalAPIBindingClusterWorkspaceTypeLabelKey is the label key on on an APIBinding indicating
-	// the ClusterWorkspaceType that created this APIBinding. Used to find
-	InternalAPIBindingClusterWorkspaceTypeLabelKey = "internal.apis.kcp.dev/clusterworkspacetype"
 )
 
 // APIBinding enables a set of resources and their behaviour through an external

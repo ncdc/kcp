@@ -48,10 +48,9 @@ import (
 	serviceaccountcontroller "k8s.io/kubernetes/pkg/controller/serviceaccount"
 	"k8s.io/kubernetes/pkg/serviceaccount"
 
-	confighomebucket "github.com/kcp-dev/kcp/config/homebucket"
-	confighomeroot "github.com/kcp-dev/kcp/config/homeroot"
 	configuniversal "github.com/kcp-dev/kcp/config/universal"
 	tenancyv1alpha1 "github.com/kcp-dev/kcp/pkg/apis/tenancy/v1alpha1"
+	bootstrappolicy "github.com/kcp-dev/kcp/pkg/authorization/bootstrap"
 	kcpclient "github.com/kcp-dev/kcp/pkg/client/clientset/versioned"
 	kcpexternalversions "github.com/kcp-dev/kcp/pkg/client/informers/externalversions"
 	"github.com/kcp-dev/kcp/pkg/indexers"
@@ -366,20 +365,16 @@ func (s *Server) installWorkloadResourceScheduler(ctx context.Context, config *r
 
 func (s *Server) installWorkspaceScheduler(ctx context.Context, config *rest.Config) error {
 	controllerName := "kcp-workspace-scheduler"
+
+	bootstrapConfig := rest.CopyConfig(config)
+	bootstrapConfig = rest.AddUserAgent(kcpclienthelper.SetMultiClusterRoundTripper(bootstrapConfig), controllerName)
+	bootstrapConfig.Impersonate.UserName = "system:kcp:bootstrapper"
+	bootstrapConfig.Impersonate.Groups = []string{bootstrappolicy.SystemKcpWorkspaceBootstrapper}
+
 	config = rest.CopyConfig(config)
 	config = rest.AddUserAgent(kcpclienthelper.SetMultiClusterRoundTripper(config), controllerName)
 
 	kcpClusterClient, err := kcpclient.NewForConfig(config)
-	if err != nil {
-		return err
-	}
-
-	crdClusterClient, err := apiextensionsclient.NewForConfig(config)
-	if err != nil {
-		return err
-	}
-
-	dynamicClusterClient, err := dynamic.NewForConfig(config)
 	if err != nil {
 		return err
 	}
@@ -414,11 +409,26 @@ func (s *Server) installWorkspaceScheduler(ctx context.Context, config *rest.Con
 		return err
 	}
 
+	dynamicClusterClient, err := dynamic.NewForConfig(bootstrapConfig)
+	if err != nil {
+		return err
+	}
+
+	crdClusterClient, err := apiextensionsclient.NewForConfig(bootstrapConfig)
+	if err != nil {
+		return err
+	}
+
+	bootstrapKcpClusterClient, err := kcpclient.NewForConfig(bootstrapConfig)
+	if err != nil {
+		return err
+	}
+
 	universalController, err := bootstrap.NewController(
-		config,
+		bootstrapConfig,
 		dynamicClusterClient,
 		crdClusterClient,
-		kcpClusterClient,
+		bootstrapKcpClusterClient,
 		s.KcpSharedInformerFactory.Tenancy().V1alpha1().ClusterWorkspaces(),
 		tenancyv1alpha1.ClusterWorkspaceTypeReference{Path: "root", Name: "universal"},
 		configuniversal.Bootstrap,
@@ -441,68 +451,6 @@ func (s *Server) installWorkspaceScheduler(ctx context.Context, config *rest.Con
 		}
 		go workspaceTypeController.Start(ctx, 2)
 		go universalController.Start(ctx, 2)
-
-		return nil
-	})
-}
-
-func (s *Server) installHomeWorkspaces(ctx context.Context, config *rest.Config) error {
-	controllerName := "kcp-home-workspaces"
-	config = rest.CopyConfig(config)
-	config = rest.AddUserAgent(kcpclienthelper.SetMultiClusterRoundTripper(config), controllerName)
-
-	kcpClusterClient, err := kcpclient.NewForConfig(config)
-	if err != nil {
-		return err
-	}
-
-	crdClusterClient, err := apiextensionsclient.NewForConfig(config)
-	if err != nil {
-		return err
-	}
-
-	dynamicClusterClient, err := dynamic.NewForConfig(config)
-	if err != nil {
-		return err
-	}
-
-	homerootController, err := bootstrap.NewController(
-		config,
-		dynamicClusterClient,
-		crdClusterClient,
-		kcpClusterClient,
-		s.KcpSharedInformerFactory.Tenancy().V1alpha1().ClusterWorkspaces(),
-		tenancyv1alpha1.ClusterWorkspaceTypeReference{Path: "root", Name: "homeroot"},
-		confighomeroot.Bootstrap,
-		sets.NewString(s.Options.Extra.BatteriesIncluded...),
-	)
-	if err != nil {
-		return err
-	}
-
-	homebucketController, err := bootstrap.NewController(
-		config,
-		dynamicClusterClient,
-		crdClusterClient,
-		kcpClusterClient,
-		s.KcpSharedInformerFactory.Tenancy().V1alpha1().ClusterWorkspaces(),
-		tenancyv1alpha1.ClusterWorkspaceTypeReference{Path: "root", Name: "homebucket"},
-		confighomebucket.Bootstrap,
-		sets.NewString(s.Options.Extra.BatteriesIncluded...),
-	)
-	if err != nil {
-		return err
-	}
-
-	return s.AddPostStartHook(postStartHookName(controllerName), func(hookContext genericapiserver.PostStartHookContext) error {
-		logger := klog.FromContext(ctx).WithValues("postStartHook", postStartHookName(controllerName))
-		if err := s.waitForSync(hookContext.StopCh); err != nil {
-			logger.Error(err, "failed to finish post-start-hook")
-			return nil // don't klog.Fatal. This only happens when context is cancelled.
-		}
-
-		go homerootController.Start(ctx, 2)
-		go homebucketController.Start(ctx, 2)
 
 		return nil
 	})
@@ -732,8 +680,12 @@ func (s *Server) installAPIBinderController(ctx context.Context, config *rest.Co
 		initializingWorkspacesKcpInformers.WaitForCacheSync(hookContext.StopCh)
 
 		if err := wait.PollImmediateInfiniteWithContext(goContext(hookContext), time.Millisecond*100, func(ctx context.Context) (bool, error) {
-			initWSSynced := initializingWorkspacesKcpInformers.Tenancy().V1alpha1().ClusterWorkspaces().Informer().HasSynced()
-			return initWSSynced, nil
+			synced := initializingWorkspacesKcpInformers.Tenancy().V1alpha1().ClusterWorkspaces().Informer().HasSynced() &&
+				s.KcpSharedInformerFactory.Tenancy().V1alpha1().ClusterWorkspaceTypes().Informer().HasSynced() &&
+				s.KcpSharedInformerFactory.Apis().V1alpha1().APIBindings().Informer().HasSynced() &&
+				s.KcpSharedInformerFactory.Apis().V1alpha1().APIExports().Informer().HasSynced()
+
+			return synced, nil
 		}); err != nil {
 			logger.Error(err, "failed to finish post-start-hook")
 			return nil // don't klog.Fatal. This only happens when context is cancelled.

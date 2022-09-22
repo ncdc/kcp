@@ -2539,9 +2539,9 @@ func schema_pkg_apis_tenancy_v1alpha1_APIExportReference(ref common.ReferenceCal
 				Description: "APIExportReference provides the fields necessary to resolve an APIExport.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"workspacePath": {
+					"path": {
 						SchemaProps: spec.SchemaProps{
-							Description: "workspacePath is the fully-qualified path to the workspace containing the APIExport.",
+							Description: "path is the fully-qualified path to the workspace containing the APIExport.",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -2556,7 +2556,7 @@ func schema_pkg_apis_tenancy_v1alpha1_APIExportReference(ref common.ReferenceCal
 						},
 					},
 				},
-				Required: []string{"workspacePath", "name"},
+				Required: []string{"path", "name"},
 			},
 		},
 	}

@@ -5,13 +5,13 @@ metadata:
 spec:
   initializer: true
   defaultAPIBindings:
-  - workspacePath: root
+  - path: root
     name: tenancy.kcp.dev
-  - workspacePath: root
+  - path: root
     name: scheduling.kcp.dev
-  - workspacePath: root
+  - path: root
     name: workload.kcp.dev
-  - workspacePath: root
+  - path: root
     name: apiresource.kcp.dev
   defaultChildren:
     types:

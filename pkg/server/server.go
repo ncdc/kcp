@@ -56,7 +56,8 @@ type Server struct {
 
 	*genericcontrolplane.ServerChain
 
-	syncedCh chan struct{}
+	syncedCh     chan struct{}
+	rootPhase1Ch chan struct{}
 }
 
 func (s *Server) AddPostStartHook(name string, hook genericapiserver.PostStartHookFunc) error {
@@ -67,6 +68,7 @@ func NewServer(c CompletedConfig) (*Server, error) {
 	s := &Server{
 		CompletedConfig: c,
 		syncedCh:        make(chan struct{}),
+		rootPhase1Ch:    make(chan struct{}),
 	}
 
 	var err error
@@ -304,8 +306,8 @@ func (s *Server) Run(ctx context.Context) error {
 			logger.Info("starting bootstrapping root workspace phase 1")
 			servingCert, _ := delegationChainHead.SecureServingInfo.Cert.CurrentCertKeyContent()
 			if err := configroot.Bootstrap(goContext(hookContext),
-				s.ApiExtensionsClusterClient.Cluster(tenancyv1alpha1.RootCluster).Discovery(),
-				s.DynamicClusterClient.Cluster(tenancyv1alpha1.RootCluster),
+				s.BootstrapApiExtensionsClusterClient.Cluster(tenancyv1alpha1.RootCluster).Discovery(),
+				s.BootstrapDynamicClusterClient.Cluster(tenancyv1alpha1.RootCluster),
 				s.Options.Extra.ShardName,
 				s.Options.Extra.ShardVirtualWorkspaceURL,
 				clientcmdapi.Config{
@@ -329,6 +331,7 @@ func (s *Server) Run(ctx context.Context) error {
 				return nil // don't klog.Fatal. This only happens when context is cancelled.
 			}
 			logger.Info("finished bootstrapping root workspace phase 1")
+			close(s.rootPhase1Ch)
 		}
 
 		return nil
@@ -377,10 +380,13 @@ func (s *Server) Run(ctx context.Context) error {
 			logger := logger.WithValues("postStartHook", computeBoostraphookName)
 			if s.Options.Extra.ShardName == tenancyv1alpha1.RootShard {
 				// the root ws is only present on the root shard
+				logger.Info("waiting to bootstrap root compute workspace until root phase1 is complete")
+				<-s.rootPhase1Ch
+
 				logger.Info("starting bootstrapping root compute workspace")
 				if err := configrootcompute.Bootstrap(goContext(hookContext),
-					s.ApiExtensionsClusterClient,
-					s.DynamicClusterClient,
+					s.BootstrapApiExtensionsClusterClient,
+					s.BootstrapDynamicClusterClient,
 					sets.NewString(s.Options.Extra.BatteriesIncluded...),
 				); err != nil {
 					logger.Error(err, "failed to bootstrap root compute workspace")
@@ -413,12 +419,6 @@ func (s *Server) Run(ctx context.Context) error {
 			return err
 		}
 		if err := s.installWorkspaceDeletionController(ctx, controllerConfig); err != nil {
-			return err
-		}
-	}
-
-	if s.Options.HomeWorkspaces.Enabled {
-		if err := s.installHomeWorkspaces(ctx, controllerConfig); err != nil {
 			return err
 		}
 	}
