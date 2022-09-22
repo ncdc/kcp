@@ -19,10 +19,13 @@ package workspaces
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
+	"net"
 	"net/http"
-	"net/url"
+	"os"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -36,14 +39,16 @@ import (
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	machineryutilnet "k8s.io/apimachinery/pkg/util/net"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	kuser "k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-	"k8s.io/klog/v2"
 
+	"github.com/kcp-dev/kcp/cmd/sharded-test-server/third_party/library-go/crypto"
 	virtualcommand "github.com/kcp-dev/kcp/cmd/virtual-workspaces/command"
 	virtualoptions "github.com/kcp-dev/kcp/cmd/virtual-workspaces/options"
 	tenancyv1alpha1 "github.com/kcp-dev/kcp/pkg/apis/tenancy/v1alpha1"
@@ -203,15 +208,11 @@ var testCases = []struct {
 
 			t.Logf("Create Workspace workspace1 in the virtual workspace")
 			var workspace1 *tenancyv1beta1.Workspace
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				// RBAC authz uses informers and needs a moment to understand the new roles. Hence, try until successful.
 				var err error
 				workspace1, err = vwUser1Client.Cluster(server.orgClusterName).TenancyV1beta1().Workspaces().Create(ctx, testData.workspace1.DeepCopy(), metav1.CreateOptions{})
-				if err != nil {
-					klog.Errorf("Failed to create workspace1: %v", err)
-					return false
-				}
-				return true
+				return err == nil, fmt.Sprintf("%v", err)
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to create workspace1")
 
 			t.Logf("Verify that the Workspace results in a ClusterWorkspace of the same name in the org workspace")
@@ -222,21 +223,21 @@ var testCases = []struct {
 			})
 
 			t.Logf("Workspace will show up in list of user1")
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				list, err := vwUser1Client.Cluster(server.orgClusterName).TenancyV1beta1().Workspaces().List(ctx, metav1.ListOptions{})
 				if err != nil {
-					t.Logf("failed to get workspaces: %v", err)
+					return false, fmt.Sprintf("failed to get workspaces: %v", err)
 				}
-				return len(list.Items) == 1 && list.Items[0].Name == workspace1.Name
+				return len(list.Items) == 1 && list.Items[0].Name == workspace1.Name, ""
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to list workspace1")
 
 			t.Logf("Workspace will show up in list of user2")
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				list, err := vwUser2Client.Cluster(server.orgClusterName).TenancyV1beta1().Workspaces().List(ctx, metav1.ListOptions{})
 				if err != nil {
-					t.Logf("failed to get workspaces: %v", err)
+					return false, fmt.Sprintf("failed to get workspaces: %v", err)
 				}
-				return len(list.Items) == 1 && list.Items[0].Name == workspace1.Name
+				return len(list.Items) == 1 && list.Items[0].Name == workspace1.Name, ""
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to list workspace1")
 
 			t.Logf("Workspace will also show up when user1 submits a list to KCP itself (through projection)")
@@ -276,27 +277,23 @@ var testCases = []struct {
 
 			t.Logf("Create Workspace workspace1 in the virtual workspace")
 			var workspace1 *tenancyv1beta1.Workspace
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				// RBAC authz uses informers and needs a moment to understand the new roles. Hence, try until successful.
 				var err error
 				workspace1, err = vwUser1Client.Cluster(server.orgClusterName).TenancyV1beta1().Workspaces().Create(ctx, testData.workspace1.DeepCopy(), metav1.CreateOptions{})
-				if err != nil {
-					klog.Errorf("Failed to create workspace1: %v", err)
-					return false
-				}
-				return true
+				return err == nil, fmt.Sprintf("%v", err)
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to create workspace1")
 
 			t.Logf("Wait until informer based virtual workspace sees the new workspace")
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				_, err := vwUser1Client.Cluster(server.orgClusterName).TenancyV1beta1().Workspaces().Get(ctx, workspace1.Name, metav1.GetOptions{})
-				return err == nil
+				return err == nil, fmt.Sprintf("%v", err)
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to get workspace1")
 
 			var err error
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				_, err = vwUser1Client.Cluster(server.orgClusterName.Join(workspace1.Name)).TenancyV1beta1().Workspaces().List(ctx, metav1.ListOptions{})
-				return err == nil
+				return err == nil, fmt.Sprintf("%v", err)
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to list workspaces in the universal cluster")
 			require.NoError(t, err, "failed to list workspaces in the universal cluster")
 		},
@@ -349,7 +346,7 @@ var testCases = []struct {
 
 			t.Logf("Create Workspace workspace1 in the virtual workspace as user1")
 			var workspace1 *tenancyv1beta1.Workspace
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				// RBAC authz uses informers and needs a moment to understand the new roles. Hence, try until successful.
 				var err error
 				workspace1, err = vwUser1Client.Cluster(parentCluster).TenancyV1beta1().Workspaces().Create(ctx, &tenancyv1beta1.Workspace{
@@ -361,10 +358,7 @@ var testCases = []struct {
 						},
 					},
 				}, metav1.CreateOptions{})
-				if err != nil {
-					t.Logf("error creating workspace: %v", err)
-				}
-				return err == nil
+				return err == nil, fmt.Sprintf("%v", err)
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to create workspace1 as user1")
 
 			t.Logf("Verify that the Workspace results in a ClusterWorkspace of the same name in the org workspace")
@@ -449,7 +443,7 @@ var testCases = []struct {
 
 			t.Logf("Create Workspace workspace1 in the virtual workspace as user1")
 			var workspace1 *tenancyv1beta1.Workspace
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				// RBAC authz uses informers and needs a moment to understand the new roles. Hence, try until successful.
 				var err error
 				workspace1, err = vwUser1Client.Cluster(parentCluster).TenancyV1beta1().Workspaces().Create(ctx, &tenancyv1beta1.Workspace{
@@ -461,10 +455,7 @@ var testCases = []struct {
 						},
 					},
 				}, metav1.CreateOptions{})
-				if err != nil {
-					t.Logf("error creating workspace: %v", err)
-				}
-				return err == nil
+				return err == nil, fmt.Sprintf("%v", err)
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to create workspace1 as user1")
 
 			t.Logf("Verify that the Workspace results in a ClusterWorkspace of the same name in the org workspace")
@@ -477,14 +468,11 @@ var testCases = []struct {
 			// Check that user1 can list and watch workspaces inside the parent workspace (part of system:kcp:tenancy:reader role every user with access has)
 			t.Logf("Verify that user1 can list and watch workspaces inside the parent workspace, and get the workspace1")
 			var listedWorkspaces *tenancyv1beta1.WorkspaceList
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				// RBAC authz uses informers and needs a moment to understand the new roles. Hence, try until successful.
 				var err error
 				listedWorkspaces, err = vwUser1Client.Cluster(parentCluster).TenancyV1beta1().Workspaces().List(ctx, metav1.ListOptions{})
-				if err != nil {
-					t.Logf("error listing workspaces: %v", err)
-				}
-				return err == nil && len(listedWorkspaces.Items) == 1
+				return err == nil && len(listedWorkspaces.Items) == 1, fmt.Sprintf("%v", err)
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to list workspaces inside the parent as user1")
 			require.NotNil(t, listedWorkspaces, "user1 should have a non-nil result when listing in the parent workspace")
 			require.Len(t, listedWorkspaces.Items, 1, "user1 should get workspace1 when listing in the parent workspace")
@@ -504,13 +492,10 @@ var testCases = []struct {
 			require.True(t, kerrors.IsForbidden(err), "expected to get a forbidden error") // not a not found error
 
 			// Check that user2 can get the `workspace1` workspace inside the parent workspace
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				// RBAC authz uses informers and needs a moment to understand the new roles. Hence, try until successful.
 				_, err = vwUser2Client.Cluster(parentCluster).TenancyV1beta1().Workspaces().Get(ctx, testData.workspace1.Name, metav1.GetOptions{})
-				if err != nil {
-					t.Logf("error getting workspace: %v", err)
-				}
-				return err == nil
+				return err == nil, fmt.Sprintf("%v", err)
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to get workspace 'workspace1' inside the parent as user2")
 			require.Nil(t, err, "user2 should be allowed to get workspace 'workspace1' inside the parent workspace")
 
@@ -539,14 +524,11 @@ var testCases = []struct {
 
 			t.Logf("Create workspace1 in org1")
 			var workspace1 *tenancyv1beta1.Workspace
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				// RBAC authz uses informers and needs a moment to understand the new roles. Hence, try until successful.
 				var err error
 				workspace1, err = org1Client.TenancyV1beta1().Workspaces().Create(ctx, testData.workspace1.DeepCopy(), metav1.CreateOptions{})
-				if err != nil {
-					t.Logf("failed to create workspace1 in org1: %v", err)
-				}
-				return err == nil
+				return err == nil, fmt.Sprintf("%v", err)
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to create workspace1")
 
 			t.Logf("Verify that the Workspace results in a ClusterWorkspace of the same name in the org workspace")
@@ -558,31 +540,27 @@ var testCases = []struct {
 
 			t.Logf("Create workspace2 in org2")
 			var workspace2 *tenancyv1beta1.Workspace
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				// RBAC authz uses informers and needs a moment to understand the new roles. Hence, try until successful.
 				var err error
 				workspace2, err = org2Client.TenancyV1beta1().Workspaces().Create(ctx, testData.workspace2.DeepCopy(), metav1.CreateOptions{})
-				if err != nil {
-					t.Logf("failed to create workspace2 in org2: %v", err)
-				}
-				return err == nil
+				return err == nil, fmt.Sprintf("%v", err)
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to create workspace2")
 
 			t.Logf("Workspace2 will show up via get")
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				// RBAC authz uses informers and needs a moment to understand the new roles. Hence, try until successful.
 				_, err := org2Client.TenancyV1beta1().Workspaces().Get(ctx, workspace2.Name, metav1.GetOptions{})
-				return err == nil
+				return err == nil, fmt.Sprintf("%v", err)
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to see workspace1 in org1 via get")
 
 			t.Logf("Workspace2 will show up via list in org1, workspace1 won't")
-			require.Eventually(t, func() bool {
+			framework.Eventually(t, func() (bool, string) {
 				list, err := org2Client.TenancyV1beta1().Workspaces().List(ctx, metav1.ListOptions{})
 				if err != nil {
-					t.Logf("failed to create workspace2 in org2: %v", err)
-					return false
+					return false, err.Error()
 				}
-				return len(list.Items) == 1 && list.Items[0].Name == workspace2.Name
+				return len(list.Items) == 1 && list.Items[0].Name == workspace2.Name, ""
 			}, wait.ForeverTestTimeout, time.Millisecond*100, "failed to see workspace1 in org1 via list")
 		},
 	},
@@ -592,25 +570,91 @@ func testWorkspacesVirtualWorkspaces(t *testing.T, standalone bool) {
 	var server framework.RunningServer
 	var virtualWorkspaceServerHost string
 	if standalone {
-		// create port early. We have to hope it is still free when we are ready to start the virtual workspace apiserver.
+		tokenAuthFile := framework.WriteTokenAuthFile(t)
+
+		certDir := t.TempDir()
+		servingCACertFile := filepath.Join(certDir, "serving-ca.crt")
+		servingCAKeyFile := filepath.Join(certDir, "serving-ca.key")
+		servingCASerialFile := filepath.Join(certDir, "serving-ca-serial.txt")
+
+		t.Logf("create server CA to be used to sign shard serving certs")
+		servingCA, err := crypto.MakeSelfSignedCA(servingCACertFile, servingCAKeyFile, servingCASerialFile, "kcp-serving-ca", 365)
+		require.NoError(t, err, "error creating serving CA")
+
+		t.Logf("find external IP to put into certs as valid IPs")
+		hostIP, err := machineryutilnet.ResolveBindAddress(net.IPv4(0, 0, 0, 0))
+		require.NoError(t, err, "error resolving bind address")
+
+		hostnames := sets.NewString("localhost", hostIP.String())
+		t.Logf("creating shard server serving cert with hostnames %v", hostnames)
+		cert, err := servingCA.MakeServerCert(hostnames, 365)
+		require.NoError(t, err, "error creating kcp serving cert")
+		shardCertFile := filepath.Join(certDir, "apiserver.crt")
+		shardKeyFile := filepath.Join(certDir, "apiserver.key")
+		err = cert.WriteCertConfigFile(shardCertFile, shardKeyFile)
+		require.NoError(t, err, "error writing kcp serving cert")
+
+		t.Logf("create client CA")
+		clientCACertFile := filepath.Join(certDir, "client-ca.crt")
+		clientCAKeyFile := filepath.Join(certDir, "client-ca.key")
+		clientCASerialFile := filepath.Join(certDir, "client-ca-serial.txt")
+		clientCA, err := crypto.MakeSelfSignedCA(clientCACertFile, clientCAKeyFile, clientCASerialFile, "kcp-client-ca", 365)
+		require.NoError(t, err, "error creating client CA")
+
+		t.Logf("create shard client cert")
+		shardClientCert := filepath.Join(certDir, "shard-client-cert.crt")
+		shardClientCertKey := filepath.Join(certDir, "shard-client-cert.key")
+		shardUser := &kuser.DefaultInfo{Name: "kcp-server", Groups: []string{"system:masters"}}
+		_, err = clientCA.MakeClientCertificate(shardClientCert, shardClientCertKey, shardUser, 365)
+		if err != nil {
+			fmt.Printf("failed to create shard client cert: %v\n", err)
+			os.Exit(1)
+		}
+
+		t.Logf("create vw client cert")
+		vwClientCert := filepath.Join(certDir, "vw-client-cert.crt")
+		vwClientCertKey := filepath.Join(certDir, "vw-client-cert.key")
+		vwUser := &kuser.DefaultInfo{Name: "vw-server", Groups: []string{"system:masters"}}
+		_, err = clientCA.MakeClientCertificate(vwClientCert, vwClientCertKey, vwUser, 365)
+		if err != nil {
+			fmt.Printf("failed to create shard client cert: %v\n", err)
+			os.Exit(1)
+		}
+
 		portStr, err := framework.GetFreePort(t)
 		require.NoError(t, err)
 
-		tokenAuthFile := framework.WriteTokenAuthFile(t)
 		server = framework.PrivateKcpServer(t,
-			append(framework.TestServerArgsWithTokenAuthFile(tokenAuthFile),
-				"--run-virtual-workspaces=false",
-				fmt.Sprintf("--shard-virtual-workspace-url=https://localhost:%s", portStr),
-			)...,
+			framework.PrivateKcpServerSkipReadyCheck(true),
+			framework.PrivateKcpServerArgs(
+				append(framework.TestServerArgsWithTokenAuthFile(tokenAuthFile),
+					"--run-virtual-workspaces=false",
+					fmt.Sprintf("--client-ca-file=%s", clientCACertFile),
+					fmt.Sprintf("--tls-cert-file=%s", shardCertFile),
+					fmt.Sprintf("--tls-private-key-file=%s", shardKeyFile),
+					fmt.Sprintf("--shard-virtual-workspace-url=https://localhost:%s", portStr),
+					fmt.Sprintf("--shard-client-cert-file=%s", shardClientCert),
+					fmt.Sprintf("--shard-client-key-file=%s", shardClientCertKey),
+					fmt.Sprintf("--shard-virtual-workspace-ca-file=%s", servingCACertFile),
+				)...,
+			),
 		)
 
-		// write kubeconfig to disk, next to kcp kubeconfig
-		kcpAdminConfig, _ := server.RawConfig()
-		var baseCluster = *kcpAdminConfig.Clusters["base"] // shallow copy
-		baseCluster.Server = fmt.Sprintf("%s/clusters/system:admin", baseCluster.Server)
+		t.Logf("write kubeconfig to disk, next to kcp kubeconfig")
+		type portListener interface {
+			ListenPort() string
+		}
+
+		pl, ok := server.(portListener)
+		require.True(t, ok, "server is not a portListener")
+		kcpPort := pl.ListenPort()
+
 		virtualWorkspaceKubeConfig := clientcmdapi.Config{
 			Clusters: map[string]*clientcmdapi.Cluster{
-				"shard": &baseCluster,
+				"shard": {
+					Server:               "https://localhost:" + kcpPort + "/clusters/system:admin",
+					CertificateAuthority: servingCACertFile,
+				},
 			},
 			Contexts: map[string]*clientcmdapi.Context{
 				"shard": {
@@ -619,24 +663,36 @@ func testWorkspacesVirtualWorkspaces(t *testing.T, standalone bool) {
 				},
 			},
 			AuthInfos: map[string]*clientcmdapi.AuthInfo{
-				"virtualworkspace": kcpAdminConfig.AuthInfos["shard-admin"],
+				"virtualworkspace": {
+					ClientCertificate: vwClientCert,
+					ClientKey:         vwClientCertKey,
+				},
 			},
 			CurrentContext: "shard",
 		}
-		kubeconfigPath := filepath.Join(filepath.Dir(server.KubeconfigPath()), "virtualworkspace.kubeconfig")
+		kubeconfigPath := filepath.Join(certDir, "virtualworkspace.kubeconfig")
 		err = clientcmd.WriteToFile(virtualWorkspaceKubeConfig, kubeconfigPath)
 		require.NoError(t, err)
 
-		// launch virtual workspace apiserver
+		t.Logf("launch virtual workspace apiserver")
+		t.Logf("create vw serving cert")
+		vwCert, err := servingCA.MakeServerCert(hostnames, 365)
+		require.NoError(t, err, "error creating vw serving cert")
+		vwServingKeyFile := filepath.Join(certDir, "vwserver.crt")
+		vwServingCertFile := filepath.Join(certDir, "vwserver.key")
+		err = vwCert.WriteCertConfigFile(vwServingCertFile, vwServingKeyFile)
+		require.NoError(t, err, "error writing vw serving cert")
+
 		port, err := strconv.Atoi(portStr)
 		require.NoError(t, err)
 		opts := virtualoptions.NewOptions()
 		opts.KubeconfigFile = kubeconfigPath
 		opts.SecureServing.BindPort = port
-		opts.SecureServing.ServerCert.CertKey.KeyFile = filepath.Join(filepath.Dir(server.KubeconfigPath()), "apiserver.key")
-		opts.SecureServing.ServerCert.CertKey.CertFile = filepath.Join(filepath.Dir(server.KubeconfigPath()), "apiserver.crt")
+		opts.SecureServing.ServerCert.CertKey.KeyFile = vwServingKeyFile
+		opts.SecureServing.ServerCert.CertKey.CertFile = vwServingCertFile
 		opts.Authentication.SkipInClusterLookup = true
 		opts.Authentication.RemoteKubeConfigFile = kubeconfigPath
+		opts.Authentication.ClientCert.ClientCA = clientCACertFile
 		err = opts.Validate()
 		require.NoError(t, err)
 		ctx, cancelFunc := context.WithCancel(context.Background())
@@ -646,25 +702,40 @@ func testWorkspacesVirtualWorkspaces(t *testing.T, standalone bool) {
 			require.NoError(t, err)
 		}()
 
-		// wait for readiness
-		client := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
-		baseClusterServerURL, err := url.Parse(baseCluster.Server)
-		require.NoError(t, err)
-		virtualWorkspaceServerHost = fmt.Sprintf("https://%s:%s", baseClusterServerURL.Hostname(), portStr)
+		t.Logf("wait for kcp server readiness")
+		err = server.Ready(true)
+		require.NoError(t, err, "kcp server not ready")
+		t.Logf("kcp server is ready")
 
-		require.Eventually(t, func() bool {
+		t.Logf("read serving ca")
+		caCert, err := ioutil.ReadFile(servingCACertFile)
+		require.NoError(t, err, "error reading serving ca cert")
+		cas := x509.NewCertPool()
+		cas.AppendCertsFromPEM(caCert)
+		client := &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					RootCAs: cas,
+				},
+			},
+		}
+		virtualWorkspaceServerHost = fmt.Sprintf("https://localhost:%s", portStr)
+
+		t.Logf("wait for vw server readiness")
+		framework.Eventually(t, func() (bool, string) {
 			resp, err := client.Get(fmt.Sprintf("%s/readyz", virtualWorkspaceServerHost))
 			if err != nil {
-				klog.Warningf("error checking virtual workspace readiness: %v", err)
-				return false
+				return false, err.Error()
 			}
-			defer resp.Body.Close()
+
+			err = resp.Body.Close()
+			require.NoError(t, err)
+
 			if resp.StatusCode == http.StatusOK {
-				return true
+				return true, ""
 			}
-			klog.Infof("virtual workspace is not ready yet, status code: %d", resp.StatusCode)
-			return false
-		}, wait.ForeverTestTimeout, time.Millisecond*100, "virtual workspace apiserver not ready")
+			return false, fmt.Sprintf("virtual workspace is not ready yet, status code: %d", resp.StatusCode)
+		}, wait.ForeverTestTimeout, time.Millisecond*100, "vw server not ready")
 	} else {
 		server = framework.SharedKcpServer(t)
 		virtualWorkspaceServerHost = server.BaseConfig(t).Host

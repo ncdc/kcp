@@ -115,6 +115,8 @@ func (s *Server) installVirtualWorkspaces(
 		return err
 	}
 
+	preparedRootAPIServer.AuditBackend = server.AuditBackend
+
 	logger.Info("starting virtual workspace apiserver")
 	preHandlerChainMux.Handle(virtualcommandoptions.DefaultRootPathPrefix+"/", preparedRootAPIServer.GenericAPIServer.Handler)
 

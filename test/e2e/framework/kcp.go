@@ -95,13 +95,33 @@ type kcpFixture struct {
 
 // PrivateKcpServer returns a new kcp server fixture managing a new
 // server process that is not intended to be shared between tests.
-func PrivateKcpServer(t *testing.T, args ...string) RunningServer {
+func PrivateKcpServer(t *testing.T, opts ...PrivateKcpServerOption) RunningServer {
 	serverName := "main"
-	f := newKcpFixture(t, kcpConfig{
+
+	c := kcpConfig{
 		Name: serverName,
-		Args: args,
-	})
+	}
+
+	for _, o := range opts {
+		o(&c)
+	}
+
+	f := newKcpFixture(t, c)
 	return f.Servers[serverName]
+}
+
+type PrivateKcpServerOption func(c *kcpConfig)
+
+func PrivateKcpServerArgs(args ...string) PrivateKcpServerOption {
+	return func(c *kcpConfig) {
+		c.Args = args
+	}
+}
+
+func PrivateKcpServerSkipReadyCheck(skip bool) PrivateKcpServerOption {
+	return func(c *kcpConfig) {
+		c.SkipReadyCheck = skip
+	}
 }
 
 // SharedKcpServer returns a kcp server fixture intended to be shared
@@ -172,6 +192,10 @@ func newKcpFixture(t *testing.T, cfgs ...kcpConfig) *kcpFixture {
 		err := srv.Run(opts...)
 		require.NoError(t, err)
 
+		if cfgs[i].SkipReadyCheck {
+			wg.Done()
+			continue
+		}
 		// Wait for the server to become ready
 		go func(s *kcpServer, i int) {
 			defer wg.Done()
@@ -211,6 +235,7 @@ type RunningServer interface {
 	BaseConfig(t *testing.T) *rest.Config
 	RootShardSystemMasterBaseConfig(t *testing.T) *rest.Config
 	Artifact(t *testing.T, producer func() (runtime.Object, error))
+	Ready(keepMonitoring bool) error
 }
 
 // kcpConfig qualify a kcp server to start
@@ -220,8 +245,9 @@ type kcpConfig struct {
 	Name string
 	Args []string
 
-	LogToConsole bool
-	RunInProcess bool
+	LogToConsole   bool
+	RunInProcess   bool
+	SkipReadyCheck bool
 }
 
 // kcpServer exposes a kcp invocation to a test and
@@ -240,7 +266,8 @@ type kcpServer struct {
 	cfg            clientcmd.ClientConfig
 	kubeconfigPath string
 
-	t *testing.T
+	t          *testing.T
+	listenPort string
 }
 
 func newKcpServer(t *testing.T, cfg kcpConfig, artifactDir, dataDir string) (*kcpServer, error) {
@@ -285,7 +312,12 @@ func newKcpServer(t *testing.T, cfg kcpConfig, artifactDir, dataDir string) (*kc
 		artifactDir: artifactDir,
 		t:           t,
 		lock:        &sync.Mutex{},
+		listenPort:  kcpListenPort,
 	}, nil
+}
+
+func (k *kcpServer) ListenPort() string {
+	return k.listenPort
 }
 
 type runOptions struct {
@@ -872,6 +904,10 @@ func (s *unmanagedKCPServer) RootShardSystemMasterBaseConfig(t *testing.T) *rest
 
 func (s *unmanagedKCPServer) Artifact(t *testing.T, producer func() (runtime.Object, error)) {
 	artifact(t, s, producer)
+}
+
+func (s *unmanagedKCPServer) Ready(keepMonitoring bool) error {
+	return nil
 }
 
 func NoGoRunEnvSet() bool {
