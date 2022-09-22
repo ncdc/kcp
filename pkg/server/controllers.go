@@ -637,7 +637,27 @@ func (s *Server) installAPIBinderController(ctx context.Context, config *rest.Co
 	config = rest.CopyConfig(config)
 	kcpclienthelper.SetMultiClusterRoundTripper(config)
 	config = rest.AddUserAgent(config, initialization.ControllerName)
-	config.Host = fmt.Sprintf("https://%v/services/%v/%v", s.GenericConfig.ExternalAddress, initializingworkspaces.VirtualWorkspaceName, tenancyv1alpha1.ClusterWorkspaceAPIBindingsInitializer)
+
+	vwURL := fmt.Sprintf("https://%s", s.GenericConfig.ExternalAddress)
+	if s.Options.Extra.ShardVirtualWorkspaceURL != "" {
+		if s.Options.Extra.ShardVirtualWorkspaceCAFile == "" {
+			// TODO move verification up
+			return fmt.Errorf("s.Options.Extra.ShardVirtualWorkspaceCAFile is required")
+		}
+		if s.Options.Extra.ShardClientCertFile == "" {
+			// TODO move verification up
+			return fmt.Errorf("s.Options.Extra.ShardClientCertFile is required")
+		}
+		if s.Options.Extra.ShardClientKeyFile == "" {
+			// TODO move verification up
+			return fmt.Errorf("s.Options.Extra.ShardClientKeyFile is required")
+		}
+		config.TLSClientConfig.CAFile = s.Options.Extra.ShardVirtualWorkspaceCAFile
+		config.TLSClientConfig.CertFile = s.Options.Extra.ShardClientCertFile
+		config.TLSClientConfig.KeyFile = s.Options.Extra.ShardClientKeyFile
+	}
+
+	config.Host = fmt.Sprintf("%v/services/%v/%v", vwURL, initializingworkspaces.VirtualWorkspaceName, tenancyv1alpha1.ClusterWorkspaceAPIBindingsInitializer)
 	initializingWorkspacesKcpClusterClient, err := kcpclient.NewForConfig(config)
 	if err != nil {
 		return err

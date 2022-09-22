@@ -30,7 +30,7 @@ import (
 	shard "github.com/kcp-dev/kcp/cmd/test-server/kcp"
 )
 
-func newShard(ctx context.Context, n int, args []string, servingCA *crypto.CA, hostIP string, logDirPath, workDirPath string, clientCA *crypto.CA) (*shard.Shard, error) {
+func newShard(ctx context.Context, n int, args []string, standaloneVW bool, servingCA *crypto.CA, hostIP string, logDirPath, workDirPath string, clientCA *crypto.CA) (*shard.Shard, error) {
 	// create serving cert
 	hostnames := sets.NewString("localhost", hostIP)
 	klog.Infof("Creating shard server %d serving cert with hostnames %v", n, hostnames)
@@ -94,6 +94,10 @@ func newShard(ctx context.Context, n int, args []string, servingCA *crypto.CA, h
 		fmt.Sprintf("--shard-client-key-file=%s", shardClientCertKey),
 		fmt.Sprintf("--shard-virtual-workspace-ca-file=%s", filepath.Join(workDirPath, ".kcp", "serving-ca.crt")),
 	)
+
+	if standaloneVW {
+		args = append(args, fmt.Sprintf("--shard-virtual-workspace-url=https://%s:%d", hostIP, 7444+n))
+	}
 
 	return shard.NewShard(
 		fmt.Sprintf("kcp-%d", n),                              // name
