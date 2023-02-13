@@ -1,5 +1,6 @@
 site_name: kcp Documentation
 repo_url: https://github.com/kcp-dev/kcp
+site_url: https://ncdc.github.io/kcp/
 
 docs_dir: '../../content/en'
 site_dir: '../../generated/en'
