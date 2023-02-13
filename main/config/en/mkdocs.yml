@@ -28,7 +28,7 @@ extra:
     provider: mike
   alternate:
   - name: English
-    link: /en/
+    link: /content/en/
     lang: en
 
 plugins:
