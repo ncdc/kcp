@@ -28,7 +28,7 @@ extra:
     provider: mike
   alternate:
   - name: English
-    link: /asdfen/
+    link: /en/
     lang: en
 
 plugins:
