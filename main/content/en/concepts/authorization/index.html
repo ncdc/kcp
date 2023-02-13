@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../../../img/favicon.ico">
+        <title>Authorization - kcp</title>
+        <link href="../../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../../../../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css">
+        <link href="../../../../css/version-select.css" rel="stylesheet">
+
+        <script src="../../../../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../../../../js/bootstrap.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../../..">kcp</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="dropdown active">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Content <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">En</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../" class="dropdown-item"><img src="logo.png" style="vertical-align: middle;" /> kcp Documentation</a>
+</li>
+            
+<li>
+    <a href="../../CONTRIBUTING/" class="dropdown-item">Contributing to kcp</a>
+</li>
+            
+<li>
+    <a href="../../GOALS/" class="dropdown-item">Project Goals</a>
+</li>
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Concepts</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../" class="dropdown-item">Terminology for kcp</a>
+</li>
+            
+<li>
+    <a href="./" class="dropdown-item active">Authorization</a>
+</li>
+            
+<li>
+    <a href="../cache-server/" class="dropdown-item">Cache Server</a>
+</li>
+            
+<li>
+    <a href="../cluster-mapper/" class="dropdown-item">Cluster Mapper</a>
+</li>
+            
+<li>
+    <a href="../kubectl-kcp-plugin/" class="dropdown-item">Kubectl kcp plugin</a>
+</li>
+            
+<li>
+    <a href="../locations-and-scheduling/" class="dropdown-item">Placement, Locations and Scheduling</a>
+</li>
+            
+<li>
+    <a href="../quickstart-tenancy-and-apis/" class="dropdown-item">Quickstart: Tenancy and APIs</a>
+</li>
+            
+<li>
+    <a href="../storage/" class="dropdown-item">Storage and stateful applications</a>
+</li>
+            
+<li>
+    <a href="../syncer/" class="dropdown-item">Registering Kubernetes Clusters using syncer</a>
+</li>
+            
+<li>
+    <a href="../virtual-workspaces/" class="dropdown-item">Virtual Workspaces</a>
+</li>
+            
+<li>
+    <a href="../workspaces/" class="dropdown-item">Workspaces</a>
+</li>
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Developers</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../developers/" class="dropdown-item">Developers</a>
+</li>
+            
+<li>
+    <a href="../developers/controllers/" class="dropdown-item">Writing kcp-aware controllers</a>
+</li>
+            
+<li>
+    <a href="../developers/library-usage/" class="dropdown-item">Using kcp as a library</a>
+</li>
+            
+<li>
+    <a href="../developers/releasing/" class="dropdown-item">Publishing a new kcp release</a>
+</li>
+            
+<li>
+    <a href="../developers/replicate-new-resource/" class="dropdown-item">Adding a new resource to the cache server and replication controller</a>
+</li>
+    </ul>
+  </li>
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Investigations</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../investigations/logical-clusters/" class="dropdown-item">Logical clusters</a>
+</li>
+            
+<li>
+    <a href="../investigations/minimal-api-server/" class="dropdown-item">Minimal API Server</a>
+</li>
+            
+<li>
+    <a href="../investigations/self-service-policy/" class="dropdown-item">Self-service policy</a>
+</li>
+            
+<li>
+    <a href="../investigations/transparent-multi-cluster/" class="dropdown-item">Transparent multi-cluster</a>
+</li>
+    </ul>
+  </li>
+    </ul>
+  </li>
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Reference</a>
+    <ul class="dropdown-menu">
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Cli</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../reference/cli/kcp/" class="dropdown-item">kcp</a>
+</li>
+            
+<li>
+    <a href="../../reference/cli/kcp_bind/" class="dropdown-item">kcp bind</a>
+</li>
+            
+<li>
+    <a href="../../reference/cli/kcp_bind_apiexport/" class="dropdown-item">kcp bind apiexport</a>
+</li>
+            
+<li>
+    <a href="../../reference/cli/kcp_bind_compute/" class="dropdown-item">kcp bind compute</a>
+</li>
+            
+<li>
+    <a href="../../reference/cli/kcp_claims/" class="dropdown-item">kcp claims</a>
+</li>
+            
+<li>
+    <a href="../../reference/cli/kcp_claims_get/" class="dropdown-item">kcp claims get</a>
+</li>
+            
+<li>
+    <a href="../../reference/cli/kcp_claims_get_apibinding/" class="dropdown-item">kcp claims get apibinding</a>
+</li>
+            
+<li>
+    <a href="../../reference/cli/kcp_crd/" class="dropdown-item">kcp crd</a>
+</li>
+            
+<li>
+    <a href="../../reference/cli/kcp_crd_snapshot/" class="dropdown-item">kcp crd snapshot</a>
+</li>
+            
+<li>
+    <a href="../../reference/cli/kcp_workload/" class="dropdown-item">kcp workload</a>
+</li>
+            
+<li>
+    <a href="../../reference/cli/kcp_workload_cordon/" class="dropdown-item">kcp workload cordon</a>
+</li>
+            
+<li>
+    <a href="../../reference/cli/kcp_workload_drain/" class="dropdown-item">kcp workload drain</a>
+</li>
+            
+<li>
+    <a href="../../reference/cli/kcp_workload_sync/" class="dropdown-item">kcp workload sync</a>
+</li>
+            
+<li>
+    <a href="../../reference/cli/kcp_workload_uncordon/" class="dropdown-item">kcp workload uncordon</a>
+</li>
+            
+<li>
+    <a href="../../reference/cli/kcp_workspace/" class="dropdown-item">kcp workspace</a>
+</li>
+            
+<li>
+    <a href="../../reference/cli/kcp_workspace_create-context/" class="dropdown-item">kcp workspace create-context</a>
+</li>
+            
+<li>
+    <a href="../../reference/cli/kcp_workspace_create/" class="dropdown-item">kcp workspace create</a>
+</li>
+            
+<li>
+    <a href="../../reference/cli/kcp_workspace_current/" class="dropdown-item">kcp workspace current</a>
+</li>
+            
+<li>
+    <a href="../../reference/cli/kcp_workspace_tree/" class="dropdown-item">kcp workspace tree</a>
+</li>
+            
+<li>
+    <a href="../../reference/cli/kcp_workspace_use/" class="dropdown-item">kcp workspace use</a>
+</li>
+    </ul>
+  </li>
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Crd</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../reference/crd/apibindings.apis.kcp.io/" class="dropdown-item">APIBinding</a>
+</li>
+            
+<li>
+    <a href="../../reference/crd/apiexportendpointslices.apis.kcp.io/" class="dropdown-item">APIExportEndpointSlice</a>
+</li>
+            
+<li>
+    <a href="../../reference/crd/apiexports.apis.kcp.io/" class="dropdown-item">APIExport</a>
+</li>
+            
+<li>
+    <a href="../../reference/crd/apiresourceimports.apiresource.kcp.io/" class="dropdown-item">APIResourceImport</a>
+</li>
+            
+<li>
+    <a href="../../reference/crd/apiresourceschemas.apis.kcp.io/" class="dropdown-item">APIResourceSchema</a>
+</li>
+            
+<li>
+    <a href="../../reference/crd/locations.scheduling.kcp.io/" class="dropdown-item">Location</a>
+</li>
+            
+<li>
+    <a href="../../reference/crd/logicalclusters.core.kcp.io/" class="dropdown-item">LogicalCluster</a>
+</li>
+            
+<li>
+    <a href="../../reference/crd/negotiatedapiresources.apiresource.kcp.io/" class="dropdown-item">NegotiatedAPIResource</a>
+</li>
+            
+<li>
+    <a href="../../reference/crd/partitions.topology.kcp.io/" class="dropdown-item">Partition</a>
+</li>
+            
+<li>
+    <a href="../../reference/crd/partitionsets.topology.kcp.io/" class="dropdown-item">PartitionSet</a>
+</li>
+            
+<li>
+    <a href="../../reference/crd/placements.scheduling.kcp.io/" class="dropdown-item">Placement</a>
+</li>
+            
+<li>
+    <a href="../../reference/crd/shards.core.kcp.io/" class="dropdown-item">Shard</a>
+</li>
+            
+<li>
+    <a href="../../reference/crd/synctargets.workload.kcp.io/" class="dropdown-item">SyncTarget</a>
+</li>
+            
+<li>
+    <a href="../../reference/crd/workspaces.tenancy.kcp.io/" class="dropdown-item">Workspace</a>
+</li>
+            
+<li>
+    <a href="../../reference/crd/workspacetypes.tenancy.kcp.io/" class="dropdown-item">WorkspaceType</a>
+</li>
+    </ul>
+  </li>
+    </ul>
+  </li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Enhancements <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../../../enhancements/0001_project_enhancements/" class="dropdown-item">0001: Project process refinement for 2023</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../cache-server/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="2"><a href="#authorizers" class="nav-link">Authorizers</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p>Within workspaces, KCP implements the same RBAC-based authorization mechanism as Kubernetes.
+Other authorization schemes (i.e. ABAC) are not supported.
+Generally, the same (cluster) role and (cluster) role binding principles apply exactly as in Kubernetes.</p>
+<p>In addition, additional RBAC semantics is implemented cross-workspaces, namely the following:</p>
+<ul>
+<li><strong>Top-Level Organization</strong> access: the user must have this as pre-requisite to access any other workspace, or is
+  even member and by that can create workspaces inside the organization workspace.</li>
+<li><strong>Workspace Content</strong> access: the user needs access to a workspace or is even admin.</li>
+<li>for some resources, additional permission checks are performed, not represented by local or Kubernetes standard RBAC rules. E.g.</li>
+<li>workspace creation checks for organization membership (see above).</li>
+<li>workspace creation checks for <code>use</code> verb on the <code>WorkspaceType</code>.</li>
+<li>API binding via APIBinding objects requires verb <code>bind</code> access to the corresponding <code>APIExport</code>.</li>
+<li><strong>System Workspaces</strong> access: system workspaces are prefixed with <code>system:</code> and are not accessible by users.</li>
+</ul>
+<p>The details are outlined below.</p>
+<h2 id="authorizers">Authorizers</h2>
+<p>The following authorizers are configured in kcp:</p>
+<table>
+<thead>
+<tr>
+<th>Authorizer</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Top-Level organization authorizer</td>
+<td>checks that the user is allowed to access the organization</td>
+</tr>
+<tr>
+<td>Workspace content authorizer</td>
+<td>determines additional groups a user gets inside of a workspace</td>
+</tr>
+<tr>
+<td>Maximal permission policy authorizer</td>
+<td>validates the maximal permission policy RBAC policy in the API exporter workspace</td>
+</tr>
+<tr>
+<td>Local Policy authorizer</td>
+<td>validates the RBAC policy in the workspace that is accessed</td>
+</tr>
+<tr>
+<td>Kubernetes Bootstrap Policy authorizer</td>
+<td>validates the RBAC Kubernetes standard policy</td>
+</tr>
+</tbody>
+</table>
+<p>They are related in the following way:</p>
+<ol>
+<li>top-level organization authorizer must allow</li>
+<li>workspace content authorizer must allow, and adds additional (virtual per-request) groups to the request user influencing the follow authorizers.</li>
+<li>maximal permission policy authorizer must allow</li>
+<li>one of the local authorizer or bootstrap policy authorizer must allow.</li>
+</ol>
+<pre><code>                                                                                 ┌──────────────┐
+                                                                                 │              │
+                                                                           ┌────►│ Local Policy ├──┐
+          ┌──────────────┐     ┌──────────────┐    ┌───────────────────┐   │     │ authorizer   │  │
+ request  │  Workspace   │     │  Required    │    │ Max. Permission   │   │     │              │  │
+─────────►│  Content     ├────►│  Groups      ├────┤ Policy authorizer ├───┤     └──────────────┘  │
+          │  Authorizer  │     │  Authorizer  │    │                   │   │                       ▼
+          └──────────────┘     └──────────────┘    └───────────────────┘   │                       OR───►
+                                                                           │     ┌──────────────┐  ▲
+                                                                           │     │  Bootstrap   │  │
+                                                                           └────►│  Policy      ├──┘
+                                                                                 │  authorizer  │
+                                                                                 │              │
+                                                                                 └──────────────┘
+</code></pre>
+<p><a href="https://asciiflow.com/#/share/eJyrVspLzE1VslLydg5QcCwtycgvyqxKLVLSUcpJrATSVkrVMUoVMUpWhgYGBjoxSpVAppGlGZBVklpRAuTEKClQGzya0vNoSgPRaEJMTB4N3NCEIUBde9B9OW0XyE6f%2FOTEHIWA%2FJzM5EqgkjnYPfloyh6SENmaSNWDaQQsIEF0Ijx9wSSgoVqUWliaWlwCtk9BITy%2FKLu4IDE5VQEqAKODgMoyi1JTFBASIMo3sUJPISC1KDezuDgzPw8uiWw1ZuRCrMbnflCMAM1xzs8rSc0rwRqGUCXuRfmlBcW44gYWnUjeB0vAI38JVOMUUpL9DMw0CXaLI1Igo4QeFgmYPJbgwQw1hPy0PUM9NWIC%2FyDkrEjtrA5LiKQVbKCg3kQrpwBpp%2Fz8kuKSosQCBZQ8QVXrUNM0pJCDZQioEnghN4NmJXkiStqnsieR7EEToI09pBUTMUq1SrUA%2FWv8Mg%3D%3D">ASCIIFlow document</a></p>
+<h3 id="workspace-content-authorizer">Workspace Content authorizer</h3>
+<p>The workspace content authorizer checks whether the user is granted access to the workspace. 
+Access is granted access through <code>verb=access</code> non-resource permission to <code>/</code> inside of the workspace.</p>
+<p>The ClusterRole <code>system:kcp:workspace:access</code> is pre-defined which makes it easy
+to give a user access through a ClusterRoleBinding inside of the workspace.</p>
+<p>For example, to give a user <code>user1</code> access, create the following ClusterRoleBinding:</p>
+<pre><code class="language-yaml">apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: example-access
+subjects:
+- kind: User
+  name: user1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:kcp:workspace:access
+</code></pre>
+<p>To give a user <code>user1</code> admin access, create the following ClusterRoleBinding:</p>
+<pre><code class="language-yaml">apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: example-admin
+subjects:
+- kind: User
+  name: user1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+</code></pre>
+<p>A service-account defined in a workspace implicitly is granted access to it.</p>
+<p>A service-account defined in a differant workspace is NOT given access to it.</p>
+<h3 id="required-groups-authorizer">Required Groups Authorizer</h3>
+<p>A <code>authorization.kcp.io/required-groups</code> annotation can be added to a LogicalCluster 
+to specify additional groups that are required to access a workspace for a user to be member of. 
+The syntax is a disjunction (separator <code>,</code>) of conjunctions (separator <code>;</code>).</p>
+<p>For example, <code>&lt;group1&gt;;&lt;group2&gt;,&lt;group3&gt;</code> means that a user must be member of <code>&lt;group1&gt;</code> AND <code>&lt;group2&gt;</code>, OR of <code>&lt;group3&gt;</code>.</p>
+<p>The annotation is copied onto sub-workspaces during scheduling.</p>
+<h4 id="initializing-workspaces">Initializing Workspaces</h4>
+<p>By default, workspaces are only accessible to a user if they are in <code>Ready</code> phase. Workspaces that are initializing
+can be access only by users that are granted <code>admin</code> verb on the <code>workspaces/content</code> resource in the
+parent workspace.</p>
+<p>Service accounts declared within a workspace don't have access to initializing workspaces.</p>
+<h3 id="maximal-permission-policy-authorizer">Maximal permission policy authorizer</h3>
+<p>If the requested resource type is part of an API binding, then this authorizer verifies that
+the request is not exceeding the maximum permission policy of the related API export.
+Currently, the "local policy" maximum permission policy type is supported.</p>
+<h4 id="local-policy">Local policy</h4>
+<p>The local maximum permission policy delegates the decision to the RBAC of the related API export.
+To distinguish between local RBAC role bindings in that workspace and those for this these maximum permission policy,
+every name and group is prefixed with <code>apis.kcp.io:binding:</code>.</p>
+<p>Example:</p>
+<p>Given an API binding for type <code>foo</code> declared in workspace <code>consumer</code> that refers to an API export declared in workspace <code>provider</code>
+and a user <code>user-1</code> having the group <code>group-1</code> requesting a <code>create</code> of <code>foo</code> in the <code>default</code> namespace in the <code>consumer</code> workspace,
+this authorizer verifies that <code>user-1</code> is allowed to execute this request by delegating to <code>provider</code>'s RBAC using prefixed attributes.</p>
+<p>Here, this authorizer prepends the <code>apis.kcp.io:binding:</code> prefix to the username and all groups the user belongs to.
+Using prefixed attributes prevents RBAC collisions i.e. if <code>user-1</code> is granted to execute requests within the <code>provider</code> workspace directly.</p>
+<p>For the given example RBAC request looks as follows:</p>
+<ul>
+<li>Username: <code>apis.kcp.io:binding:user-1</code></li>
+<li>Group: <code>apis.kcp.io:binding:group-1</code></li>
+<li>Resource: <code>foo</code></li>
+<li>Namespace: <code>default</code></li>
+<li>Workspace: <code>provider</code></li>
+<li>Verb: <code>create</code></li>
+</ul>
+<p>The following role and role binding declared within the <code>provider</code> workspace will grant access to the request:</p>
+<pre><code class="language-yaml">apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: foo-creator
+  clusterName: provider
+rules:
+- apiGroups:
+  - foo.api
+  resources:
+  - foos
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: user-1-foo-creator
+  namespace: default
+  clusterName: provider
+subjects:
+- kind: User
+  name: apis.kcp.io:binding:user-1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: foo-creator
+</code></pre>
+<p>!!! note
+    The same authorization scheme is enforced when executing the request of a claimed resource via the virtual API Export API server,
+    i.e. a claimed resource is bound to the same maximal permission policy. Only the actual owner of that resources can go beyond that policy.</p>
+<p>TBD: Example</p>
+<h3 id="kubernetes-bootstrap-policy-authorizer">Kubernetes Bootstrap Policy authorizer</h3>
+<p>The bootstrap policy authorizer works just like the local authorizer but references RBAC rules
+defined in the <code>system:admin</code> system workspace.</p>
+<h3 id="local-policy-authorizer">Local Policy authorizer</h3>
+<p>Once the top-level organization authorizer and the workspace content authorizer granted access to a
+workspace, RBAC rules contained in the workspace derived from the request context are evaluated.</p>
+<p>This authorizer ensures that RBAC rules contained within a workspace are being applied
+and work just like in a regular Kubernetes cluster.</p>
+<p>!!! note
+    Groups added by the workspace content authorizer can be used for role bindings in that workspace.</p>
+<p>It is possible to bind to roles and cluster roles in the bootstrap policy from a local policy <code>RoleBinding</code> or <code>ClusterRoleBinding</code>.</p>
+<h3 id="service-accounts">Service Accounts</h3>
+<p>Kubernetes service accounts are granted access to the workspaces they are defined in and that are ready.</p>
+<p>E.g. a service account "default" in <code>root:org:ws:ws</code> is granted access to <code>root:org:ws:ws</code>, and through the
+workspace content authorizer it gains the <code>system:kcp:clusterworkspace:access</code> group membership.</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "../../../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../../../js/base.js" defer></script>
+        <script src="../../../../search/main.js" defer></script>
+        <script src="../../../../js/version-select.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

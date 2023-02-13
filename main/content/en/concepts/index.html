@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../../img/favicon.ico">
+        <title>Terminology for kcp - kcp</title>
+        <link href="../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../../../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css">
+        <link href="../../../css/version-select.css" rel="stylesheet">
+
+        <script src="../../../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../../../js/bootstrap.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../..">kcp</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="dropdown active">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Content <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">En</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../" class="dropdown-item"><img src="logo.png" style="vertical-align: middle;" /> kcp Documentation</a>
+</li>
+            
+<li>
+    <a href="../CONTRIBUTING/" class="dropdown-item">Contributing to kcp</a>
+</li>
+            
+<li>
+    <a href="../GOALS/" class="dropdown-item">Project Goals</a>
+</li>
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Concepts</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="./" class="dropdown-item active">Terminology for kcp</a>
+</li>
+            
+<li>
+    <a href="authorization/" class="dropdown-item">Authorization</a>
+</li>
+            
+<li>
+    <a href="cache-server/" class="dropdown-item">Cache Server</a>
+</li>
+            
+<li>
+    <a href="cluster-mapper/" class="dropdown-item">Cluster Mapper</a>
+</li>
+            
+<li>
+    <a href="kubectl-kcp-plugin/" class="dropdown-item">Kubectl kcp plugin</a>
+</li>
+            
+<li>
+    <a href="locations-and-scheduling/" class="dropdown-item">Placement, Locations and Scheduling</a>
+</li>
+            
+<li>
+    <a href="quickstart-tenancy-and-apis/" class="dropdown-item">Quickstart: Tenancy and APIs</a>
+</li>
+            
+<li>
+    <a href="storage/" class="dropdown-item">Storage and stateful applications</a>
+</li>
+            
+<li>
+    <a href="syncer/" class="dropdown-item">Registering Kubernetes Clusters using syncer</a>
+</li>
+            
+<li>
+    <a href="virtual-workspaces/" class="dropdown-item">Virtual Workspaces</a>
+</li>
+            
+<li>
+    <a href="workspaces/" class="dropdown-item">Workspaces</a>
+</li>
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Developers</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="developers/" class="dropdown-item">Developers</a>
+</li>
+            
+<li>
+    <a href="developers/controllers/" class="dropdown-item">Writing kcp-aware controllers</a>
+</li>
+            
+<li>
+    <a href="developers/library-usage/" class="dropdown-item">Using kcp as a library</a>
+</li>
+            
+<li>
+    <a href="developers/releasing/" class="dropdown-item">Publishing a new kcp release</a>
+</li>
+            
+<li>
+    <a href="developers/replicate-new-resource/" class="dropdown-item">Adding a new resource to the cache server and replication controller</a>
+</li>
+    </ul>
+  </li>
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Investigations</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="investigations/logical-clusters/" class="dropdown-item">Logical clusters</a>
+</li>
+            
+<li>
+    <a href="investigations/minimal-api-server/" class="dropdown-item">Minimal API Server</a>
+</li>
+            
+<li>
+    <a href="investigations/self-service-policy/" class="dropdown-item">Self-service policy</a>
+</li>
+            
+<li>
+    <a href="investigations/transparent-multi-cluster/" class="dropdown-item">Transparent multi-cluster</a>
+</li>
+    </ul>
+  </li>
+    </ul>
+  </li>
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Reference</a>
+    <ul class="dropdown-menu">
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Cli</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../reference/cli/kcp/" class="dropdown-item">kcp</a>
+</li>
+            
+<li>
+    <a href="../reference/cli/kcp_bind/" class="dropdown-item">kcp bind</a>
+</li>
+            
+<li>
+    <a href="../reference/cli/kcp_bind_apiexport/" class="dropdown-item">kcp bind apiexport</a>
+</li>
+            
+<li>
+    <a href="../reference/cli/kcp_bind_compute/" class="dropdown-item">kcp bind compute</a>
+</li>
+            
+<li>
+    <a href="../reference/cli/kcp_claims/" class="dropdown-item">kcp claims</a>
+</li>
+            
+<li>
+    <a href="../reference/cli/kcp_claims_get/" class="dropdown-item">kcp claims get</a>
+</li>
+            
+<li>
+    <a href="../reference/cli/kcp_claims_get_apibinding/" class="dropdown-item">kcp claims get apibinding</a>
+</li>
+            
+<li>
+    <a href="../reference/cli/kcp_crd/" class="dropdown-item">kcp crd</a>
+</li>
+            
+<li>
+    <a href="../reference/cli/kcp_crd_snapshot/" class="dropdown-item">kcp crd snapshot</a>
+</li>
+            
+<li>
+    <a href="../reference/cli/kcp_workload/" class="dropdown-item">kcp workload</a>
+</li>
+            
+<li>
+    <a href="../reference/cli/kcp_workload_cordon/" class="dropdown-item">kcp workload cordon</a>
+</li>
+            
+<li>
+    <a href="../reference/cli/kcp_workload_drain/" class="dropdown-item">kcp workload drain</a>
+</li>
+            
+<li>
+    <a href="../reference/cli/kcp_workload_sync/" class="dropdown-item">kcp workload sync</a>
+</li>
+            
+<li>
+    <a href="../reference/cli/kcp_workload_uncordon/" class="dropdown-item">kcp workload uncordon</a>
+</li>
+            
+<li>
+    <a href="../reference/cli/kcp_workspace/" class="dropdown-item">kcp workspace</a>
+</li>
+            
+<li>
+    <a href="../reference/cli/kcp_workspace_create-context/" class="dropdown-item">kcp workspace create-context</a>
+</li>
+            
+<li>
+    <a href="../reference/cli/kcp_workspace_create/" class="dropdown-item">kcp workspace create</a>
+</li>
+            
+<li>
+    <a href="../reference/cli/kcp_workspace_current/" class="dropdown-item">kcp workspace current</a>
+</li>
+            
+<li>
+    <a href="../reference/cli/kcp_workspace_tree/" class="dropdown-item">kcp workspace tree</a>
+</li>
+            
+<li>
+    <a href="../reference/cli/kcp_workspace_use/" class="dropdown-item">kcp workspace use</a>
+</li>
+    </ul>
+  </li>
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Crd</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../reference/crd/apibindings.apis.kcp.io/" class="dropdown-item">APIBinding</a>
+</li>
+            
+<li>
+    <a href="../reference/crd/apiexportendpointslices.apis.kcp.io/" class="dropdown-item">APIExportEndpointSlice</a>
+</li>
+            
+<li>
+    <a href="../reference/crd/apiexports.apis.kcp.io/" class="dropdown-item">APIExport</a>
+</li>
+            
+<li>
+    <a href="../reference/crd/apiresourceimports.apiresource.kcp.io/" class="dropdown-item">APIResourceImport</a>
+</li>
+            
+<li>
+    <a href="../reference/crd/apiresourceschemas.apis.kcp.io/" class="dropdown-item">APIResourceSchema</a>
+</li>
+            
+<li>
+    <a href="../reference/crd/locations.scheduling.kcp.io/" class="dropdown-item">Location</a>
+</li>
+            
+<li>
+    <a href="../reference/crd/logicalclusters.core.kcp.io/" class="dropdown-item">LogicalCluster</a>
+</li>
+            
+<li>
+    <a href="../reference/crd/negotiatedapiresources.apiresource.kcp.io/" class="dropdown-item">NegotiatedAPIResource</a>
+</li>
+            
+<li>
+    <a href="../reference/crd/partitions.topology.kcp.io/" class="dropdown-item">Partition</a>
+</li>
+            
+<li>
+    <a href="../reference/crd/partitionsets.topology.kcp.io/" class="dropdown-item">PartitionSet</a>
+</li>
+            
+<li>
+    <a href="../reference/crd/placements.scheduling.kcp.io/" class="dropdown-item">Placement</a>
+</li>
+            
+<li>
+    <a href="../reference/crd/shards.core.kcp.io/" class="dropdown-item">Shard</a>
+</li>
+            
+<li>
+    <a href="../reference/crd/synctargets.workload.kcp.io/" class="dropdown-item">SyncTarget</a>
+</li>
+            
+<li>
+    <a href="../reference/crd/workspaces.tenancy.kcp.io/" class="dropdown-item">Workspace</a>
+</li>
+            
+<li>
+    <a href="../reference/crd/workspacetypes.tenancy.kcp.io/" class="dropdown-item">WorkspaceType</a>
+</li>
+    </ul>
+  </li>
+    </ul>
+  </li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Enhancements <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../../enhancements/0001_project_enhancements/" class="dropdown-item">0001: Project process refinement for 2023</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../GOALS/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="authorization/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="2"><a href="#logical-cluster" class="nav-link">Logical cluster</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="2"><a href="#workload-cluster" class="nav-link">Workload Cluster</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="2"><a href="#workspace" class="nav-link">Workspace</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="2"><a href="#workspace-type" class="nav-link">Workspace type</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="2"><a href="#virtual-workspace" class="nav-link">Virtual Workspace</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="2"><a href="#index-eg-workspace-index" class="nav-link">Index (e.g. Workspace Index)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="2"><a href="#shard" class="nav-link">Shard</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="2"><a href="#api-binding" class="nav-link">API Binding</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="2"><a href="#syncer" class="nav-link">Syncer</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="2"><a href="#location" class="nav-link">Location</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h2 id="logical-cluster">Logical cluster</h2>
+<p>A logical cluster is a way to subdivide a single kube-apiserver + etcd storage into multiple clusters (different APIs,
+separate semantics for access, policy, and control) without requiring multiple instances.  A logical cluster is a
+mechanism for achieving separation, but may be modelled differently in different use cases.  A logical cluster is
+similar to a virtual cluster as defined by sig-multicluster, but is able to amortize the cost of a new cluster to be
+zero or near-zero memory and storage so that we can create tens of millions of empty clusters cheaply.</p>
+<p>A logical cluster is a storage level concept that adds an additional attribute to an object’s identifier on a
+kube-apiserver.  Regular servers identify objects by (group, version, resource, optional namespace, name).  A logical
+cluster enriches an identifier: (group, version, resource, <strong>logical cluster name</strong>, optional namespace, name).</p>
+<h2 id="workload-cluster">Workload Cluster</h2>
+<p>A physical cluster is a “real Kubernetes cluster”, i.e. one that can run Kubernetes workloads and accepts standard
+Kubernetes API objects.  For the near term, it is assumed that a physical cluster is a distribution of Kubernetes and
+passes the conformance tests and exposes the behavior a regular Kubernetes admin or user expects.</p>
+<h2 id="workspace">Workspace</h2>
+<p>A workspace models a set of user-facing APIs for CRUD.  Each workspace is backed by a logical cluster, but not all
+logical clusters may be exposed as workspaces.  Creating a Workspace object results in a logical cluster being available
+via a URL for the client to connect and create resources supported by the APIs in that workspace.  There could be
+multiple different models that result in logical clusters being created, with different policies or lifecycles, but
+Workspace is intended to be the most generic representation of the concept with the broadest possible utility to anyone
+building control planes.</p>
+<p>A workspace binds APIs and makes them accessible inside the logical cluster, allocates capacity for creating instances
+of those APIs (quota), and defines how multi-workspace operations can be performed by users, clients, and controller
+integrations.</p>
+<p>To a user, a workspace appears to be a Kubernetes cluster minus all the container orchestration specific resources. It
+has its own discovery, its own OpenAPI spec, and follows the kube-like constraints about uniqueness of
+Group-Version-Resource and its behaviour (no two GVRs with different schemas can exist per workspace, but workspaces can
+have different schemas). A user can define a workspace as a context in a kubeconfig file and <code>kubectl get all -A</code> would
+return all objects in all namespaces of that workspace.</p>
+<p>Workspace naming is chosen to be aligned with the Kubernetes Namespace object - a Namespace subdivides a workspace by
+name, a workspace subdivides the universe into chunks of meaningful work.</p>
+<p>Workspaces are the containers for all API objects, so users orient by viewing lists of workspaces from APIs.</p>
+<h2 id="workspace-type">Workspace type</h2>
+<p>Workspaces have types, which are mostly oriented around a set of default or optional APIs exposed.  For instance, a
+workspace intended for use deploying Kube applications might expose the same API objects a user would encounter on a
+physical cluster.  A workspace intended for building functions might expose only the knative serving APIs, config maps
+and secrets, and optionally enable knative eventing APIs.</p>
+<p>At the current time there is no decision on whether a workspace type represents an inheritance or composition model,
+although in general we prefer composition approaches.  We also do not have a fully resolved design.</p>
+<h2 id="virtual-workspace">Virtual Workspace</h2>
+<p>An API object has one source of truth (is stored transactionally in one system), but may be exposed to different use
+cases with different fields or schemas.  Since a workspace is the user facing interaction with an API object, if we want
+to deal with Workspaces in aggregate, we need to be able to list them.  Since a user may have access to workspaces in
+multiple different contexts, or for different use cases (a workspace that belongs to the user personally, or one that
+belongs to a business organization), the list of “all workspaces” itself needs to be exposed as an API object to an end
+user inside a workspace.  That workspace is “virtual” - it adapts or transforms the underlying source of truth for the
+object and potentially the schema the user sees.</p>
+<h2 id="index-eg-workspace-index">Index (e.g. Workspace Index)</h2>
+<p>An index is the authoritative list of a particular API in their source of truth across the system.  For instance, in
+order for a user to see all the workspaces they have available, they must consult the workspace index to return a list
+of their workspaces.  It is expected that indices are suitable for consistent LIST/WATCHing (in the kubernetes sense) so
+that integrations can be built to view the list of those objects.</p>
+<p>Index in the control plane sense should not be confused with secondary indices (in the database sense), which may be
+used to enable a particular index.</p>
+<h2 id="shard">Shard</h2>
+<p>A failure domain within the larger control plane service that cuts across the primary functionality. Most distributed
+systems must separate functionality across shards to mitigate failures, and typically users interact with shards through
+some transparent serving infrastructure.  Since the primary problem of building distributed systems is reasoning about
+failure domains and dependencies across them, it is critical to allow operators to effectively match shards, understand
+dependencies, and bring them together.</p>
+<p>A control plane should be shardable in a way that maximizes application SLO - gives users a tool that allows them to
+better define their applications not to fail.</p>
+<h2 id="api-binding">API Binding</h2>
+<p>The act of associating a set of APIs with a given logical cluster.  The Workspace model defines one particular
+implementation of the lifecycle of a logical cluster and the APIs within it.  Because APIs and the implementations that
+back an API evolve over time, it is important that the binding be introspectable and orchestrate-able - that a consumer
+can provide a rolling deployment of a new API or new implementation across hundreds or thousands of workspaces.</p>
+<p>There are likely a few objects involved in defining the APIs exposed within a workspace, but in general they probably
+define a spec (which APIs / implementations to associate with) and a status (the chosen APIs / implementations that are
+currently bound), allow a user to bulk associate APIs (i.e. multiple APIs at the same time, like “all knative serving
+APIs”), and may be defaulted based on some attributes of a workspace type (all workspaces of this “type” get the default
+Kube APIs, this other “type” get the knative apis).</p>
+<p>The evolution of an API within a workspace and across workspaces is of key importance.</p>
+<h2 id="syncer">Syncer</h2>
+<p>A syncer is installed on a SyncTarget and is responsible for synchronizing data between kcp and that cluster.</p>
+<h2 id="location">Location</h2>
+<p>A collection of SyncTargets that describe runtime characteristics that allow placement of applications.
+Characteristics are not limited but could describe things like GPU, supported storage, compliance or
+regulatory fulfillment, or geographical placement.</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "../../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../../js/base.js" defer></script>
+        <script src="../../../search/main.js" defer></script>
+        <script src="../../../js/version-select.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
