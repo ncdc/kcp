@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title><img src="logo.png" style="vertical-align: middle;" /> kcp Documentation - kcp</title>
+        <link href="../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css">
+        <link href="../../css/version-select.css" rel="stylesheet">
+
+        <script src="../../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../../js/bootstrap.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../..">kcp</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="dropdown active">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Content <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">En</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="./" class="dropdown-item active"><img src="logo.png" style="vertical-align: middle;" /> kcp Documentation</a>
+</li>
+            
+<li>
+    <a href="CONTRIBUTING/" class="dropdown-item">Contributing to kcp</a>
+</li>
+            
+<li>
+    <a href="GOALS/" class="dropdown-item">Project Goals</a>
+</li>
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Concepts</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="concepts/" class="dropdown-item">Terminology for kcp</a>
+</li>
+            
+<li>
+    <a href="concepts/authorization/" class="dropdown-item">Authorization</a>
+</li>
+            
+<li>
+    <a href="concepts/cache-server/" class="dropdown-item">Cache Server</a>
+</li>
+            
+<li>
+    <a href="concepts/cluster-mapper/" class="dropdown-item">Cluster Mapper</a>
+</li>
+            
+<li>
+    <a href="concepts/kubectl-kcp-plugin/" class="dropdown-item">Kubectl kcp plugin</a>
+</li>
+            
+<li>
+    <a href="concepts/locations-and-scheduling/" class="dropdown-item">Placement, Locations and Scheduling</a>
+</li>
+            
+<li>
+    <a href="concepts/quickstart-tenancy-and-apis/" class="dropdown-item">Quickstart: Tenancy and APIs</a>
+</li>
+            
+<li>
+    <a href="concepts/storage/" class="dropdown-item">Storage and stateful applications</a>
+</li>
+            
+<li>
+    <a href="concepts/syncer/" class="dropdown-item">Registering Kubernetes Clusters using syncer</a>
+</li>
+            
+<li>
+    <a href="concepts/virtual-workspaces/" class="dropdown-item">Virtual Workspaces</a>
+</li>
+            
+<li>
+    <a href="concepts/workspaces/" class="dropdown-item">Workspaces</a>
+</li>
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Developers</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="concepts/developers/" class="dropdown-item">Developers</a>
+</li>
+            
+<li>
+    <a href="concepts/developers/controllers/" class="dropdown-item">Writing kcp-aware controllers</a>
+</li>
+            
+<li>
+    <a href="concepts/developers/library-usage/" class="dropdown-item">Using kcp as a library</a>
+</li>
+            
+<li>
+    <a href="concepts/developers/releasing/" class="dropdown-item">Publishing a new kcp release</a>
+</li>
+            
+<li>
+    <a href="concepts/developers/replicate-new-resource/" class="dropdown-item">Adding a new resource to the cache server and replication controller</a>
+</li>
+    </ul>
+  </li>
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Investigations</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="concepts/investigations/logical-clusters/" class="dropdown-item">Logical clusters</a>
+</li>
+            
+<li>
+    <a href="concepts/investigations/minimal-api-server/" class="dropdown-item">Minimal API Server</a>
+</li>
+            
+<li>
+    <a href="concepts/investigations/self-service-policy/" class="dropdown-item">Self-service policy</a>
+</li>
+            
+<li>
+    <a href="concepts/investigations/transparent-multi-cluster/" class="dropdown-item">Transparent multi-cluster</a>
+</li>
+    </ul>
+  </li>
+    </ul>
+  </li>
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Reference</a>
+    <ul class="dropdown-menu">
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Cli</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="reference/cli/kcp/" class="dropdown-item">kcp</a>
+</li>
+            
+<li>
+    <a href="reference/cli/kcp_bind/" class="dropdown-item">kcp bind</a>
+</li>
+            
+<li>
+    <a href="reference/cli/kcp_bind_apiexport/" class="dropdown-item">kcp bind apiexport</a>
+</li>
+            
+<li>
+    <a href="reference/cli/kcp_bind_compute/" class="dropdown-item">kcp bind compute</a>
+</li>
+            
+<li>
+    <a href="reference/cli/kcp_claims/" class="dropdown-item">kcp claims</a>
+</li>
+            
+<li>
+    <a href="reference/cli/kcp_claims_get/" class="dropdown-item">kcp claims get</a>
+</li>
+            
+<li>
+    <a href="reference/cli/kcp_claims_get_apibinding/" class="dropdown-item">kcp claims get apibinding</a>
+</li>
+            
+<li>
+    <a href="reference/cli/kcp_crd/" class="dropdown-item">kcp crd</a>
+</li>
+            
+<li>
+    <a href="reference/cli/kcp_crd_snapshot/" class="dropdown-item">kcp crd snapshot</a>
+</li>
+            
+<li>
+    <a href="reference/cli/kcp_workload/" class="dropdown-item">kcp workload</a>
+</li>
+            
+<li>
+    <a href="reference/cli/kcp_workload_cordon/" class="dropdown-item">kcp workload cordon</a>
+</li>
+            
+<li>
+    <a href="reference/cli/kcp_workload_drain/" class="dropdown-item">kcp workload drain</a>
+</li>
+            
+<li>
+    <a href="reference/cli/kcp_workload_sync/" class="dropdown-item">kcp workload sync</a>
+</li>
+            
+<li>
+    <a href="reference/cli/kcp_workload_uncordon/" class="dropdown-item">kcp workload uncordon</a>
+</li>
+            
+<li>
+    <a href="reference/cli/kcp_workspace/" class="dropdown-item">kcp workspace</a>
+</li>
+            
+<li>
+    <a href="reference/cli/kcp_workspace_create-context/" class="dropdown-item">kcp workspace create-context</a>
+</li>
+            
+<li>
+    <a href="reference/cli/kcp_workspace_create/" class="dropdown-item">kcp workspace create</a>
+</li>
+            
+<li>
+    <a href="reference/cli/kcp_workspace_current/" class="dropdown-item">kcp workspace current</a>
+</li>
+            
+<li>
+    <a href="reference/cli/kcp_workspace_tree/" class="dropdown-item">kcp workspace tree</a>
+</li>
+            
+<li>
+    <a href="reference/cli/kcp_workspace_use/" class="dropdown-item">kcp workspace use</a>
+</li>
+    </ul>
+  </li>
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Crd</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="reference/crd/apibindings.apis.kcp.io/" class="dropdown-item">APIBinding</a>
+</li>
+            
+<li>
+    <a href="reference/crd/apiexportendpointslices.apis.kcp.io/" class="dropdown-item">APIExportEndpointSlice</a>
+</li>
+            
+<li>
+    <a href="reference/crd/apiexports.apis.kcp.io/" class="dropdown-item">APIExport</a>
+</li>
+            
+<li>
+    <a href="reference/crd/apiresourceimports.apiresource.kcp.io/" class="dropdown-item">APIResourceImport</a>
+</li>
+            
+<li>
+    <a href="reference/crd/apiresourceschemas.apis.kcp.io/" class="dropdown-item">APIResourceSchema</a>
+</li>
+            
+<li>
+    <a href="reference/crd/locations.scheduling.kcp.io/" class="dropdown-item">Location</a>
+</li>
+            
+<li>
+    <a href="reference/crd/logicalclusters.core.kcp.io/" class="dropdown-item">LogicalCluster</a>
+</li>
+            
+<li>
+    <a href="reference/crd/negotiatedapiresources.apiresource.kcp.io/" class="dropdown-item">NegotiatedAPIResource</a>
+</li>
+            
+<li>
+    <a href="reference/crd/partitions.topology.kcp.io/" class="dropdown-item">Partition</a>
+</li>
+            
+<li>
+    <a href="reference/crd/partitionsets.topology.kcp.io/" class="dropdown-item">PartitionSet</a>
+</li>
+            
+<li>
+    <a href="reference/crd/placements.scheduling.kcp.io/" class="dropdown-item">Placement</a>
+</li>
+            
+<li>
+    <a href="reference/crd/shards.core.kcp.io/" class="dropdown-item">Shard</a>
+</li>
+            
+<li>
+    <a href="reference/crd/synctargets.workload.kcp.io/" class="dropdown-item">SyncTarget</a>
+</li>
+            
+<li>
+    <a href="reference/crd/workspaces.tenancy.kcp.io/" class="dropdown-item">Workspace</a>
+</li>
+            
+<li>
+    <a href="reference/crd/workspacetypes.tenancy.kcp.io/" class="dropdown-item">WorkspaceType</a>
+</li>
+    </ul>
+  </li>
+    </ul>
+  </li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Enhancements <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../enhancements/0001_project_enhancements/" class="dropdown-item">0001: Project process refinement for 2023</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" class="nav-link disabled">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="CONTRIBUTING/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="1"><a href="#kcp-documentation" class="nav-link"> kcp Documentation</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#overview" class="nav-link">Overview</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#quickstart" class="nav-link">Quickstart</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#next-steps" class="nav-link">Next steps</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#contributing" class="nav-link">Contributing</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#getting-in-touch" class="nav-link">Getting in touch</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#additional-references" class="nav-link">Additional references</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="kcp-documentation"><img src="logo.png" style="vertical-align: middle;" /> kcp Documentation</h1>
+<h2 id="overview">Overview</h2>
+<p>kcp is a Kubernetes-like control plane focusing on:</p>
+<ul>
+<li>A <strong>control plane</strong> for many independent, <strong>isolated</strong> “clusters” known as <strong>workspaces</strong></li>
+<li>Enabling API service providers to <strong>offer APIs centrally</strong> using <strong>multi-tenant operators</strong></li>
+<li>Easy <strong>API consumption</strong> for users in their workspaces</li>
+<li>Flexible <strong>scheduling</strong> of workloads to physical clusters</li>
+<li><strong>Transparent movement</strong> of workloads among compatible physical clusters</li>
+<li><strong>Advanced deployment strategies</strong> for scenarios such as affinity/anti-affinity, geographic replication, cross-cloud
+  replication, etc.</li>
+</ul>
+<p>kcp can be a building block for SaaS service providers who need a <strong>massively multi-tenant platform</strong> to offer services
+to a large number of fully isolated tenants using Kubernetes-native APIs. The goal is to be useful to cloud
+providers as well as enterprise IT departments offering APIs within their company.</p>
+<h2 id="quickstart">Quickstart</h2>
+<h3 id="prerequisites">Prerequisites</h3>
+<ul>
+<li><a href="https://kubernetes.io/docs/tasks/tools/#kubectl">kubectl</a></li>
+<li>A Kubernetes cluster (for local testing, consider <a href="http://kind.sigs.k8s.io">kind</a>)</li>
+</ul>
+<h3 id="download-kcp">Download kcp</h3>
+<p>Visit our <a href="https://github.com/kcp-dev/kcp/releases/latest">latest release page</a> and download <code>kcp</code>
+and <code>kubectl-kcp-plugin</code> that match your operating system and architecture.</p>
+<p>Extract <code>kcp</code> and <code>kubectl-kcp-plugin</code> and place all the files in the <code>bin</code> directories somewhere in your <code>$PATH</code>.</p>
+<h3 id="start-kcp">Start kcp</h3>
+<p>You can start kcp using this command:</p>
+<pre><code class="language-shell">kcp start
+</code></pre>
+<p>This launches kcp in the foreground. You can press <code>ctrl-c</code> to stop it.</p>
+<p>To see a complete list of server options, run <code>kcp start options</code>.</p>
+<h3 id="set-your-kubeconfig">Set your KUBECONFIG</h3>
+<p>During its startup, kcp generates a kubeconfig in <code>.kcp/admin.kubeconfig</code>. Use this to connect to kcp and display the
+version to confirm it's working:</p>
+<pre><code class="language-shell">$ export KUBECONFIG=.kcp/admin.kubeconfig
+$ kubectl version
+WARNING: This version information is deprecated and will be replaced with the output from kubectl version --short.  Use --output=yaml|json to get the full version.
+Client Version: version.Info{Major:&quot;1&quot;, Minor:&quot;24&quot;, GitVersion:&quot;v1.24.4&quot;, GitCommit:&quot;95ee5ab382d64cfe6c28967f36b53970b8374491&quot;, GitTreeState:&quot;clean&quot;, BuildDate:&quot;2022-08-17T18:46:11Z&quot;, GoVersion:&quot;go1.19&quot;, Compiler:&quot;gc&quot;, Platform:&quot;darwin/amd64&quot;}
+Kustomize Version: v4.5.4
+Server Version: version.Info{Major:&quot;1&quot;, Minor:&quot;24&quot;, GitVersion:&quot;v1.24.3+kcp-v0.8.0&quot;, GitCommit:&quot;41863897&quot;, GitTreeState:&quot;clean&quot;, BuildDate:&quot;2022-09-02T18:10:37Z&quot;, GoVersion:&quot;go1.18.5&quot;, Compiler:&quot;gc&quot;, Platform:&quot;darwin/amd64&quot;}
+</code></pre>
+<h3 id="configure-kcp-to-sync-to-your-cluster">Configure kcp to sync to your cluster</h3>
+<p>kcp can't run pods by itself - it needs at least one physical cluster for that. For this example, we'll be using a
+local <code>kind</code> cluster.  It does not have to exist yet.</p>
+<p>In this recipe we use the root workspace to hold the description of the workload and where it goes.  These usually would go elsewhere, but we use the root workspace here for simplicity.</p>
+<p>Run the following command to tell kcp about the <code>kind</code> cluster (replace the syncer image tag as needed; CI now puts built images in https://github.com/orgs/kcp-dev/packages):</p>
+<pre><code class="language-shell">$ kubectl kcp workload sync kind --syncer-image ghcr.io/kcp-dev/kcp/syncer:v0.10.0 -o syncer-kind-main.yaml
+Creating synctarget &quot;kind&quot;
+Creating service account &quot;kcp-syncer-kind-25coemaz&quot;
+Creating cluster role &quot;kcp-syncer-kind-25coemaz&quot; to give service account &quot;kcp-syncer-kind-25coemaz&quot;
+
+ 1. write and sync access to the synctarget &quot;kcp-syncer-kind-25coemaz&quot;
+ 2. write access to apiresourceimports.
+
+Creating or updating cluster role binding &quot;kcp-syncer-kind-25coemaz&quot; to bind service account &quot;kcp-syncer-kind-25coemaz&quot; to cluster role &quot;kcp-syncer-kind-25coemaz&quot;.
+
+Wrote physical cluster manifest to syncer-kind-main.yaml for namespace &quot;kcp-syncer-kind-25coemaz&quot;. Use
+
+  KUBECONFIG=&lt;pcluster-config&gt; kubectl apply -f &quot;syncer-kind-main.yaml&quot;
+
+to apply it. Use
+
+  KUBECONFIG=&lt;pcluster-config&gt; kubectl get deployment -n &quot;kcp-syncer-kind-25coemaz&quot; kcp-syncer-kind-25coemaz
+
+to verify the syncer pod is running.
+</code></pre>
+<p>Next, we need to install the syncer pod on our <code>kind</code> cluster - this is what actually syncs content from kcp to the
+physical cluster. The kind cluster needs to be running by now. Run the following command:</p>
+<pre><code class="language-shell">$ KUBECONFIG=&lt;/path/to/kind/kubeconfig&gt; kubectl apply -f &quot;syncer-kind-main.yaml&quot;
+namespace/kcp-syncer-kind-25coemaz created
+serviceaccount/kcp-syncer-kind-25coemaz created
+secret/kcp-syncer-kind-25coemaz-token created
+clusterrole.rbac.authorization.k8s.io/kcp-syncer-kind-25coemaz created
+clusterrolebinding.rbac.authorization.k8s.io/kcp-syncer-kind-25coemaz created
+secret/kcp-syncer-kind-25coemaz created
+deployment.apps/kcp-syncer-kind-25coemaz created
+</code></pre>
+<h3 id="bind-to-workload-apis-and-create-default-placement">Bind to workload APIs and create default placement</h3>
+<p>If you are running kcp version v0.10.0 or higher, you will need to run the following commmand (continuing in the <code>root</code> workspace)
+to create a binding to the workload APIs export and a default placement for your physical cluster:</p>
+<pre><code class="language-shell">$ kubectl kcp bind compute root
+Binding APIExport &quot;root:compute:kubernetes&quot;.
+placement placement-1pfxsevk created.
+Placement &quot;placement-1pfxsevk&quot; is ready.
+</code></pre>
+<h3 id="create-a-deployment-in-kcp">Create a deployment in kcp</h3>
+<p>Let's create a deployment in our kcp workspace and see it get synced to our cluster:</p>
+<pre><code class="language-shell">$ kubectl create deployment --image=gcr.io/kuar-demo/kuard-amd64:blue --port=8080 kuard
+deployment.apps/kuard created
+</code></pre>
+<p>Once your cluster has pulled the image and started the pod, you should be able to verify the deployment is running in
+kcp:</p>
+<pre><code class="language-shell">$ kubectl get deployments
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE
+kuard   1/1     1            1           3s
+</code></pre>
+<p>We are still working on adding support for <code>kubectl logs</code>, <code>kubectl exec</code>, and <code>kubectl port-forward</code> to kcp. For the
+time being, you can check directly in your cluster.</p>
+<p>kcp translates the names of namespaces in workspaces to unique names in a physical cluster. We first must get this
+translated name; if you're following along, your translated name might be different.</p>
+<pre><code class="language-shell">$ KUBECONFIG=&lt;/path/to/kind/kubeconfig&gt; kubectl get pods --all-namespaces --selector app=kuard
+NAMESPACE          NAME                     READY   STATUS    RESTARTS   AGE
+kcp-26zq2mc2yajx   kuard-7d49c786c5-wfpcc   1/1     Running   0          4m28s
+</code></pre>
+<p>Now we can e.g. check the pod logs:</p>
+<pre><code class="language-shell">$ KUBECONFIG=&lt;/path/to/kind/kubeconfig&gt; kubectl --namespace kcp-26zq2mc2yajx logs deployment/kuard | head
+2022/09/07 14:04:35 Starting kuard version: v0.10.0-blue
+2022/09/07 14:04:35 **********************************************************************
+2022/09/07 14:04:35 * WARNING: This server may expose sensitive
+2022/09/07 14:04:35 * and secret information. Be careful.
+2022/09/07 14:04:35 **********************************************************************
+2022/09/07 14:04:35 Config:
+{
+  &quot;address&quot;: &quot;:8080&quot;,
+  &quot;debug&quot;: false,
+  &quot;debug-sitedata-dir&quot;: &quot;./sitedata&quot;,
+</code></pre>
+<h2 id="next-steps">Next steps</h2>
+<p>Thanks for checking out our quickstart!</p>
+<p>If you're interested in learning more about all the features kcp has to offer, please check out our additional
+documentation:</p>
+<ul>
+<li><a href="concepts">Concepts</a> - a high level overview of kcp concepts</li>
+<li><a href="concepts/workspaces/">Workspaces</a> - a more thorough introduction on kcp's workspaces</li>
+<li><a href="concepts/locations-and-scheduling/">Locations &amp; scheduling</a> - details on kcp's primitives that abstract over clusters</li>
+<li><a href="concepts/syncer/">Syncer</a> - information on running the kcp agent that syncs content between kcp and a physical cluster</li>
+<li><a href="concepts/kubectl-kcp-plugin/">kubectl plugin</a></li>
+<li><a href="concepts/authorization/">Authorization</a> - how kcp manages access control to workspaces and content</li>
+<li><a href="concepts/virtual-workspaces/">Virtual workspaces</a> - details on kcp's mechanism for virtual views of workspace content</li>
+</ul>
+<h2 id="contributing">Contributing</h2>
+<p>We ❤️ our contributors! If you're interested in helping us out, please head over to our <a href="CONTRIBUTING/">Contributing</a>
+and <a href="concepts/developers">Developer</a> guides.</p>
+<h2 id="getting-in-touch">Getting in touch</h2>
+<p>There are several ways to communicate with us:</p>
+<ul>
+<li>The <a href="https://app.slack.com/client/T09NY5SBT/C021U8WSAFK"><code>#kcp-dev</code> channel</a> in the <a href="https://slack.k8s.io">Kubernetes Slack workspace</a></li>
+<li>Our mailing lists:<ul>
+<li><a href="https://groups.google.com/g/kcp-dev">kcp-dev</a> for development discussions</li>
+<li><a href="https://groups.google.com/g/kcp-users">kcp-users</a> for discussions among users and potential users</li>
+</ul>
+</li>
+<li>Subscribe to the <a href="https://calendar.google.com/calendar/embed?src=ujjomvk4fa9fgdaem32afgl7g0%40group.calendar.google.com">community calendar</a> for community meetings and events<ul>
+<li>The kcp-dev mailing list is subscribed to this calendar</li>
+</ul>
+</li>
+<li>See recordings of past community meetings on <a href="https://www.youtube.com/channel/UCfP_yS5uYix0ppSbm2ltS5Q">YouTube</a></li>
+<li>See <a href="https://github.com/kcp-dev/kcp/issues?q=is%3Aissue+is%3Aopen+label%3Acommunity-meeting">upcoming</a> and <a href="https://github.com/kcp-dev/kcp/issues?q=is%3Aissue+label%3Acommunity-meeting+is%3Aclosed">past</a> community meeting agendas and notes</li>
+<li>Browse the <a href="https://drive.google.com/drive/folders/1FN7AZ_Q1CQor6eK0gpuKwdGFNwYI517M?usp=sharing">shared Google Drive</a> to share design docs, notes, etc.<ul>
+<li>Members of the kcp-dev mailing list can view this drive</li>
+</ul>
+</li>
+</ul>
+<h2 id="additional-references">Additional references</h2>
+<ul>
+<li><a href="https://www.youtube.com/watch?v=oaPBYUfdFE8">KubeCon EU 2021: Kubernetes as the Hybrid Cloud Control Plane Keynote - Clayton Coleman (video)</a></li>
+<li><a href="https://www.youtube.com/watch?v=Y3Y11Aj_01I">OpenShift Commons: Kubernetes as the Control Plane for the Hybrid Cloud - Clayton Coleman (video)</a></li>
+<li><a href="https://youtu.be/FD_kY3Ey2pI">TGI Kubernetes 157: Exploring kcp: apiserver without Kubernetes</a></li>
+<li><a href="https://www.youtube.com/watch?v=YrdAYoo-UQQ">K8s SIG Architecture meeting discussing kcp - June 29, 2021</a></li>
+<li><a href="https://www.youtube.com/watch?v=M4mn_LlCyzk">Let's Learn kcp - A minimal Kubernetes API server with Saiyam Pathak - July 7, 2021</a></li>
+</ul></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../js/base.js" defer></script>
+        <script src="../../search/main.js" defer></script>
+        <script src="../../js/version-select.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
