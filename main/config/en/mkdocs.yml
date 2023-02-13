@@ -26,10 +26,10 @@ theme:
 extra:
   version:
     provider: mike
-#  alternate:
-#  - name: English
-#    link: /en/
-#    lang: en
+  alternate:
+  - name: English
+    link: /asdfen/
+    lang: en
 
 plugins:
   - awesome-pages
