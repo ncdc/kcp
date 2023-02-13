@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../../../../img/favicon.ico">
+        <title>Transparent multi-cluster - kcp</title>
+        <link href="../../../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../../../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../../../../../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css">
+        <link href="../../../../../css/version-select.css" rel="stylesheet">
+
+        <script src="../../../../../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../../../../../js/bootstrap.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../../../..">kcp</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="dropdown active">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Content <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">En</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../../" class="dropdown-item"><img src="logo.png" style="vertical-align: middle;" /> kcp Documentation</a>
+</li>
+            
+<li>
+    <a href="../../../CONTRIBUTING/" class="dropdown-item">Contributing to kcp</a>
+</li>
+            
+<li>
+    <a href="../../../GOALS/" class="dropdown-item">Project Goals</a>
+</li>
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Concepts</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../" class="dropdown-item">Terminology for kcp</a>
+</li>
+            
+<li>
+    <a href="../../authorization/" class="dropdown-item">Authorization</a>
+</li>
+            
+<li>
+    <a href="../../cache-server/" class="dropdown-item">Cache Server</a>
+</li>
+            
+<li>
+    <a href="../../cluster-mapper/" class="dropdown-item">Cluster Mapper</a>
+</li>
+            
+<li>
+    <a href="../../kubectl-kcp-plugin/" class="dropdown-item">Kubectl kcp plugin</a>
+</li>
+            
+<li>
+    <a href="../../locations-and-scheduling/" class="dropdown-item">Placement, Locations and Scheduling</a>
+</li>
+            
+<li>
+    <a href="../../quickstart-tenancy-and-apis/" class="dropdown-item">Quickstart: Tenancy and APIs</a>
+</li>
+            
+<li>
+    <a href="../../storage/" class="dropdown-item">Storage and stateful applications</a>
+</li>
+            
+<li>
+    <a href="../../syncer/" class="dropdown-item">Registering Kubernetes Clusters using syncer</a>
+</li>
+            
+<li>
+    <a href="../../virtual-workspaces/" class="dropdown-item">Virtual Workspaces</a>
+</li>
+            
+<li>
+    <a href="../../workspaces/" class="dropdown-item">Workspaces</a>
+</li>
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Developers</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../developers/" class="dropdown-item">Developers</a>
+</li>
+            
+<li>
+    <a href="../../developers/controllers/" class="dropdown-item">Writing kcp-aware controllers</a>
+</li>
+            
+<li>
+    <a href="../../developers/library-usage/" class="dropdown-item">Using kcp as a library</a>
+</li>
+            
+<li>
+    <a href="../../developers/releasing/" class="dropdown-item">Publishing a new kcp release</a>
+</li>
+            
+<li>
+    <a href="../../developers/replicate-new-resource/" class="dropdown-item">Adding a new resource to the cache server and replication controller</a>
+</li>
+    </ul>
+  </li>
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Investigations</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../logical-clusters/" class="dropdown-item">Logical clusters</a>
+</li>
+            
+<li>
+    <a href="../minimal-api-server/" class="dropdown-item">Minimal API Server</a>
+</li>
+            
+<li>
+    <a href="../self-service-policy/" class="dropdown-item">Self-service policy</a>
+</li>
+            
+<li>
+    <a href="./" class="dropdown-item active">Transparent multi-cluster</a>
+</li>
+    </ul>
+  </li>
+    </ul>
+  </li>
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Reference</a>
+    <ul class="dropdown-menu">
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Cli</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../../reference/cli/kcp/" class="dropdown-item">kcp</a>
+</li>
+            
+<li>
+    <a href="../../../reference/cli/kcp_bind/" class="dropdown-item">kcp bind</a>
+</li>
+            
+<li>
+    <a href="../../../reference/cli/kcp_bind_apiexport/" class="dropdown-item">kcp bind apiexport</a>
+</li>
+            
+<li>
+    <a href="../../../reference/cli/kcp_bind_compute/" class="dropdown-item">kcp bind compute</a>
+</li>
+            
+<li>
+    <a href="../../../reference/cli/kcp_claims/" class="dropdown-item">kcp claims</a>
+</li>
+            
+<li>
+    <a href="../../../reference/cli/kcp_claims_get/" class="dropdown-item">kcp claims get</a>
+</li>
+            
+<li>
+    <a href="../../../reference/cli/kcp_claims_get_apibinding/" class="dropdown-item">kcp claims get apibinding</a>
+</li>
+            
+<li>
+    <a href="../../../reference/cli/kcp_crd/" class="dropdown-item">kcp crd</a>
+</li>
+            
+<li>
+    <a href="../../../reference/cli/kcp_crd_snapshot/" class="dropdown-item">kcp crd snapshot</a>
+</li>
+            
+<li>
+    <a href="../../../reference/cli/kcp_workload/" class="dropdown-item">kcp workload</a>
+</li>
+            
+<li>
+    <a href="../../../reference/cli/kcp_workload_cordon/" class="dropdown-item">kcp workload cordon</a>
+</li>
+            
+<li>
+    <a href="../../../reference/cli/kcp_workload_drain/" class="dropdown-item">kcp workload drain</a>
+</li>
+            
+<li>
+    <a href="../../../reference/cli/kcp_workload_sync/" class="dropdown-item">kcp workload sync</a>
+</li>
+            
+<li>
+    <a href="../../../reference/cli/kcp_workload_uncordon/" class="dropdown-item">kcp workload uncordon</a>
+</li>
+            
+<li>
+    <a href="../../../reference/cli/kcp_workspace/" class="dropdown-item">kcp workspace</a>
+</li>
+            
+<li>
+    <a href="../../../reference/cli/kcp_workspace_create-context/" class="dropdown-item">kcp workspace create-context</a>
+</li>
+            
+<li>
+    <a href="../../../reference/cli/kcp_workspace_create/" class="dropdown-item">kcp workspace create</a>
+</li>
+            
+<li>
+    <a href="../../../reference/cli/kcp_workspace_current/" class="dropdown-item">kcp workspace current</a>
+</li>
+            
+<li>
+    <a href="../../../reference/cli/kcp_workspace_tree/" class="dropdown-item">kcp workspace tree</a>
+</li>
+            
+<li>
+    <a href="../../../reference/cli/kcp_workspace_use/" class="dropdown-item">kcp workspace use</a>
+</li>
+    </ul>
+  </li>
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Crd</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../../reference/crd/apibindings.apis.kcp.io/" class="dropdown-item">APIBinding</a>
+</li>
+            
+<li>
+    <a href="../../../reference/crd/apiexportendpointslices.apis.kcp.io/" class="dropdown-item">APIExportEndpointSlice</a>
+</li>
+            
+<li>
+    <a href="../../../reference/crd/apiexports.apis.kcp.io/" class="dropdown-item">APIExport</a>
+</li>
+            
+<li>
+    <a href="../../../reference/crd/apiresourceimports.apiresource.kcp.io/" class="dropdown-item">APIResourceImport</a>
+</li>
+            
+<li>
+    <a href="../../../reference/crd/apiresourceschemas.apis.kcp.io/" class="dropdown-item">APIResourceSchema</a>
+</li>
+            
+<li>
+    <a href="../../../reference/crd/locations.scheduling.kcp.io/" class="dropdown-item">Location</a>
+</li>
+            
+<li>
+    <a href="../../../reference/crd/logicalclusters.core.kcp.io/" class="dropdown-item">LogicalCluster</a>
+</li>
+            
+<li>
+    <a href="../../../reference/crd/negotiatedapiresources.apiresource.kcp.io/" class="dropdown-item">NegotiatedAPIResource</a>
+</li>
+            
+<li>
+    <a href="../../../reference/crd/partitions.topology.kcp.io/" class="dropdown-item">Partition</a>
+</li>
+            
+<li>
+    <a href="../../../reference/crd/partitionsets.topology.kcp.io/" class="dropdown-item">PartitionSet</a>
+</li>
+            
+<li>
+    <a href="../../../reference/crd/placements.scheduling.kcp.io/" class="dropdown-item">Placement</a>
+</li>
+            
+<li>
+    <a href="../../../reference/crd/shards.core.kcp.io/" class="dropdown-item">Shard</a>
+</li>
+            
+<li>
+    <a href="../../../reference/crd/synctargets.workload.kcp.io/" class="dropdown-item">SyncTarget</a>
+</li>
+            
+<li>
+    <a href="../../../reference/crd/workspaces.tenancy.kcp.io/" class="dropdown-item">Workspace</a>
+</li>
+            
+<li>
+    <a href="../../../reference/crd/workspacetypes.tenancy.kcp.io/" class="dropdown-item">WorkspaceType</a>
+</li>
+    </ul>
+  </li>
+    </ul>
+  </li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Enhancements <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../../../../enhancements/0001_project_enhancements/" class="dropdown-item">0001: Project process refinement for 2023</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../self-service-policy/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../../../reference/cli/kcp/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="2"><a href="#goal-the-majority-of-applications-and-teams-should-have-workflows-where-cluster-is-a-detail" class="nav-link">Goal: The majority of applications and teams should have workflows where cluster is a detail</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="2"><a href="#areas-of-investigation" class="nav-link">Areas of investigation</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="2"><a href="#use-cases" class="nav-link">Use cases</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="2"><a href="#progress" class="nav-link">Progress</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p>A key tenet of Kubernetes is that workload placement is node-agnostic until the user needs it to be - Kube offers a homogeneous compute surface that admins or app devs can "break-glass" and set constraints all the way down to writing software that deeply integrates with nodes. But for the majority of workloads a cluster is no more important than a node - it's a detail determined by some human or automated process.</p>
+<p>A key area of investigation for <code>kcp</code> is exploring transparency of workloads to clusters. Aspirationally we want Kube workloads to be resilient to the operational characteristics of the underlying infrastructure and clusters orthogonally to the workload, by isolating the user from knowing of the details of the infrastructure. If workload APIs are more consistently "node-less" and "cluster-agnostic" that opens up ways to drive workload consistency across a large swathe of the compute landscape.</p>
+<h2 id="goal-the-majority-of-applications-and-teams-should-have-workflows-where-cluster-is-a-detail">Goal: The majority of applications and teams should have workflows where cluster is a detail</h2>
+<p>A number of projects have explored this since the beginning of Kubernetes - this prototype should explore in detail how we can make a normal Kubernetes flow for most users be cluster-independent but still "break-glass" and describe placement in detail. Since this is a broad topic and we want to benefit the majority of users, we need to also add constraints that maximize the chance of these approaches being adopted.</p>
+<h3 id="constraint-the-workflows-and-practices-teams-use-today-should-be-minimally-disrupted">Constraint: The workflows and practices teams use today should be minimally disrupted</h3>
+<p>Users typically only change their workflows when an improvement offers a significant multiplier. To be effective we must reduce friction (which reduces multipliers) and offer significant advantages to that workflow.</p>
+<p>Tools, practices, user experiences, and automation should "just work" when applied to cluster-agnostic or cluster-aware workloads. This includes gitops, rich web interfaces, <code>kubectl</code>, etc. That implies that a "cluster" and a "Kube API" is our key target, and that we must preserve a majority of semantic meaning of existing APIs.</p>
+<h3 id="constraint-95-of-workloads-should-just-work-when-kubectl-applyd-to-kcp">Constraint: 95% of workloads should "just work" when <code>kubectl apply</code>d to <code>kcp</code></h3>
+<p>It continues to be possible to build different abstractions on top of Kube, but existing workloads are what really benefit users. They have chosen the Kube abstractions deliberately because they are general purpose - rather than describe a completely new system we believe it is more effective to uplevel these existing apps.  That means that existing primitives like Service, Deployment, PersistentVolumeClaim, StatefulSet must all require no changes to move from single-cluster to multi-cluster</p>
+<p>By choosing this constraint, we also accept that we will have to be opinionated on making the underlying clusters consistent, and we will have to limit / constrain certain behaviors. Ideally, we focus on preserving the user's view of the changes on a logical cluster, while making the workloads on a physical cluster look more consistent for infrastructure admins. This implies we need to explore both what these workloads might look like (a review of applications) and describe the points of control / abstraction between levels.</p>
+<h3 id="constraint-90-of-application-infrastructure-controllers-should-be-useful-against-kcp">Constraint: 90% of application infrastructure controllers should be useful against <code>kcp</code></h3>
+<p>A controller that performs app infra related functions should be useful without change against <code>kcp</code>. For instance, the etcd operator takes an <code>Etcd</code> cluster CRD and creates pods. It should be possible for that controller to target a <code>kcp</code> logical cluster with the CRD and create pods on the logical cluster that are transparently placed onto a cluster.</p>
+<h2 id="areas-of-investigation">Areas of investigation</h2>
+<ol>
+<li>Define high level user use cases</li>
+<li>Study approaches from the ecosystem that do not require workloads to change significantly to spread</li>
+<li>Explore characteristics of most common Kube workload objects that could allow them to be transparently placed</li>
+<li>Identify the control points and data flow between workload and physical cluster that would be generally useful across a wide range of approaches - such as:<ol>
+<li>How placement is assigned, altered, and removed ("scheduling" or "placement")</li>
+<li>How workloads are transformed from high level to low level and then summarized back</li>
+<li>Categorize approaches in the ecosystem and gaps where collaboration could improve velocity
+4.</li>
+</ol>
+</li>
+<li>Identify key infrastructure characteristics for multi-cluster<ol>
+<li>Networking between components and transparency of location to movement</li>
+<li>Data movement, placement, and replication</li>
+<li>Abstraction/interception of off-cluster dependencies (external to the system)</li>
+<li>Consistency of infrastructure (where does Kube not sufficiently drive operational consistency)</li>
+</ol>
+</li>
+<li>Seek consensus in user communities on whether the abstractions are practical</li>
+<li>Invest in key technologies in the appropriate projects</li>
+<li>Formalize parts of the prototype into project(s) drawing on the elements above if successful!</li>
+</ol>
+<h2 id="use-cases">Use cases</h2>
+<p>Representing feedback from a number of multi-cluster users with a diverse set of technologies in play:</p>
+<h3 id="as-a-user">As a user</h3>
+<ol>
+<li>I can <code>kubectl apply</code> a workload that is agnostic to node placement to <code>kcp</code> and see the workload assigned to real resources and start running and the status summarized back to me.</li>
+<li>I can move an application (defined in 1) between two physical clusters by changing a single high level attribute</li>
+<li>As a user when I move an application (as defined in 2) no disruption of internal or external traffic is visible to my consumers</li>
+<li>As a user I can debug my application in a familiar manner regardless of cluster</li>
+<li>As a user with a stateful application by persistent volumes can move / replicate / be shared across clusters in a manner consistent with my storage type (read-write-one / read-write-many).</li>
+</ol>
+<h3 id="as-an-infrastructure-admin">As an infrastructure admin</h3>
+<ol>
+<li>I can decommision an physical cluster and see workloads moved without disruption</li>
+<li>I can set capacity bounds that control admission to a particular cluster and react to workload growth organically</li>
+</ol>
+<h2 id="progress">Progress</h2>
+<p>In the early prototype stage <code>kcp</code> uses the <code>syncer</code> and the <code>deployment-splitter</code> as stand-ins for more complex scheduling and transformation. This section should see more updates in the near term as we move beyond areas 1-2 (use cases and ecosystem research)</p>
+<h3 id="possible-design-simplifications">Possible design simplifications</h3>
+<ol>
+<li>Focus on every object having an annotation saying which clusters it is targeted at</li>
+<li>We can control the annotation via admission eventually, works for all objects</li>
+<li>Tracking declarative and atomic state change (NONE -&gt; A, A-&gt;(A,B), A-&gt;NONE) on
+     objects</li>
+<li>RBAC stays at the higher level and applies to the logical clusters, is not synced</li>
+<li>Implication is that controllers won't be syncable today, BUT that's ok because it's likely giving workloads control over the underlying cluster is a non-goal to start and would have to be explicit opt-in by admin</li>
+<li>Controllers already need to separate input from output - most controllers assume they're the same (but things like service load balancer)</li>
+<li>Think of scheduling as a policy at global, per logical cluster, and optionally the namespace (policy of object type -&gt; 0..N clusters)</li>
+<li>Simplification over doing a bunch of per object work, since we want to be transparent (per object is a future optimization with some limits)</li>
+</ol></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "../../../../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../../../../js/base.js" defer></script>
+        <script src="../../../../../search/main.js" defer></script>
+        <script src="../../../../../js/version-select.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
