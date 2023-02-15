@@ -99,8 +99,7 @@ dl.crd-meta {
 
 .property-header h3 {
     font-size: 22px;
-    margin: 0;
-    margin-left: -0.1em;
+    margin: 0 0 0 -0.1em;
 }
 
 .property-description,
